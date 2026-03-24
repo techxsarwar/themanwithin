@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Author | The Man Within</title>
+    <title>Gallery | The Man Within</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -19,8 +19,8 @@
             <ul class="nav-links">
                 <li><a href="index.html">Home</a></li>
                 <li><a href="about.html">The Book</a></li>
-                <li><a href="author.html" class="active">The Author</a></li>
-                <li><a href="gallery.html">Gallery</a></li>
+                <li><a href="author.html">The Author</a></li>
+                <li><a href="gallery.html" class="active">Gallery</a></li>
                 <li><a href="contact.html">Contact</a></li>
                 <li><a href="index.html#buy" class="nav-cta">Get Your Copy</a></li>
             </ul>
@@ -32,29 +32,27 @@
 
     <header class="page-header">
         <div class="container reveal reveal-bottom">
-            <h1>Meet the Author</h1>
+            <h1>Gallery</h1>
             <div class="divider"></div>
+            <p style="color: var(--text-muted); margin-top: 1.5rem; font-size: 1.1rem;">Glimpses into the world of The Man Within.</p>
         </div>
     </header>
 
-    <section class="author" style="padding-top: 2rem; padding-bottom: 6rem;">
+    <section class="gallery-section">
         <div class="container">
-            <div class="author-container" style="gap: 5rem;">
-                <div class="author-profile reveal reveal-left">
-                    <div class="author-image-wrapper" style="width: clamp(200px, 25vw, 350px); height: clamp(200px, 25vw, 350px);">
-                        <div class="author-placeholder" style="font-size: 8rem;">
-                            <i class="fas fa-feather-alt"></i>
-                        </div>
-                    </div>
+            <div class="gallery-grid">
+                <div class="gallery-item reveal reveal-bottom">
+                    <img src="assets/817pYZLksEL._SY425_.jpg" alt="The Man Within Cover Page">
                 </div>
-                <div class="author-bio glass-panel reveal reveal-right">
-                    <h3>Faisal Rasool</h3>
-                    <p class="author-subtitle">Student, Writer, Dreamer</p>
-                    <p>A student of Jawahar Navodaya Vidyalaya, born in Anantnag and hailing from D.H. Pora, Kulgam, in Jammu & Kashmir.</p>
-                    <p>At just 15 years old, Faisal has embarked on a journey to explore the profound depths of human emotion. He writes with a rare honesty and an intuitive understanding of the silent battles fought within the mind.</p>
-                    <p>Fascinated by human nature, he seeks to give a voice to feelings that often remain unspoken in our fast-paced world.</p>
-                    <p><em>"The Man Within"</em> is his debut book—an honest exploration of the inner world and a testament to the power of reflection.</p>
+                <div class="gallery-item reveal reveal-bottom" style="transition-delay: 0.1s;">
+                    <img src="assets/81xp8FukLYL._SX550_.jpg" alt="The Man Within Full Spread">
                 </div>
+                <div class="gallery-item reveal reveal-bottom" style="transition-delay: 0.2s;">
+                    <img src="assets/71BWf9r-34L._SY425_.jpg" alt="The Man Within Book Highlight">
+                </div>
+            </div>
+            <div class="purchase-links" style="margin-top: 4rem; text-align: center;">
+                <a href="index.html#buy" class="btn btn-secondary reveal reveal-bottom">View All Artwork</a>
             </div>
         </div>
     </section>
