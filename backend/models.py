@@ -54,6 +54,15 @@ class Review(Base):
     text = Column(Text)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+class Message(Base):
+    __tablename__ = "messages"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    email = Column(String)
+    subject = Column(String)
+    message = Column(Text)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
 Base.metadata.create_all(bind=engine)
 
 def get_db():

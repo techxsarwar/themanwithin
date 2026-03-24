@@ -1,5 +1,4 @@
 import os
-import sqlite3
 import secrets
 from datetime import datetime
 from fastapi import FastAPI, Request, Depends, HTTPException, status
@@ -13,7 +12,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from models import (
-    get_db, Announcement, SEOSetting, Analytics, SiteSetting, Review,
+    get_db, Announcement, SEOSetting, Analytics, SiteSetting, Review, Message,
     AnnouncementCreate, AnnouncementUpdate, SEOSettingUpdate,
     SiteSettingUpdate, ReviewCreate
 )
@@ -31,29 +30,9 @@ app.add_middleware(
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
 FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
-DB_PATH = os.path.join(BASE_DIR, "contact.db")
 
 # DB Configuration and Models are now efficiently refactored into models.py
 
-
-# Initialize SQLite DB
-def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            email TEXT,
-            subject TEXT,
-            message TEXT,
-            timestamp TEXT
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
-init_db()
 
 security = HTTPBasic()
 
@@ -103,29 +82,23 @@ async def read_js():
 
 # API endpoint for handling contact form submissions
 @app.post("/api/contact")
-async def handle_contact_form(message: ContactMessage):
-    # Log the message to the console
-    print("-" * 40)
-    print("NEW CONTACT MESSAGE")
-    print(f"Name:    {message.name}")
-    print(f"Email:   {message.email}")
-    print(f"Subject: {message.subject}")
-    print(f"Message: {message.message}")
-    print("-" * 40)
-    
-    # Save to SQLite database
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    c.execute("INSERT INTO messages (name, email, subject, message, timestamp) VALUES (?, ?, ?, ?, ?)",
-              (message.name, message.email, message.subject, message.message, timestamp))
-    conn.commit()
-    conn.close()
-    
-    return JSONResponse(content={
-        "status": "success", 
-        "message": "Thank you! Your message has been received."
-    })
+async def handle_contact_form(message: ContactMessage, db=Depends(get_db)):
+    try:
+        db_msg = Message(
+            name=message.name, 
+            email=message.email, 
+            subject=message.subject, 
+            message=message.message
+        )
+        db.add(db_msg)
+        db.commit()
+        return JSONResponse(content={
+            "status": "success", 
+            "message": "Thank you! Your message has been received."
+        })
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Admin endpoints
 @app.get("/login", response_class=HTMLResponse)
@@ -143,14 +116,26 @@ async def admin_dashboard():
     return HTMLResponse("<h1>admin.html missing</h1>", status_code=404)
 
 @app.get("/api/admin/messages")
-async def get_admin_messages(username: str = Depends(get_current_username)):
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    c = conn.cursor()
-    c.execute("SELECT * FROM messages ORDER BY id DESC")
-    rows = c.fetchall()
-    conn.close()
-    return [dict(row) for row in rows]
+async def get_admin_messages(db=Depends(get_db), username: str = Depends(get_current_username)):
+    try:
+        return db.query(Message).order_by(Message.created_at.desc()).all()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/admin/messages/{id}")
+async def delete_admin_message(id: int, db=Depends(get_db), username: str = Depends(get_current_username)):
+    try:
+        db_msg = db.query(Message).filter(Message.id == id).first()
+        if not db_msg:
+            raise HTTPException(status_code=404, detail="Message not found")
+        db.delete(db_msg)
+        db.commit()
+        return {"status": "success"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Announcement Endpoints
 @app.get("/api/admin/announcements")
