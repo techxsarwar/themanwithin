@@ -27,6 +27,7 @@
                 <li><a href="index.html" class="active">Home</a></li>
                 <li><a href="about.html">The Book</a></li>
                 <li><a href="author.html">The Author</a></li>
+                <li><a href="reviews.html">Reviews</a></li>
                 <li><a href="gallery.html">Gallery</a></li>
                 <li><a href="contact.html">Contact</a></li>
                 <li><a href="#buy" class="nav-cta">Get Your Copy</a></li>
@@ -36,6 +37,18 @@
             </button>
         </div>
     </nav>
+
+    <!-- Top Announcement Banner -->
+    <div id="announcement-banner" class="announcement-banner" style="display: none;">
+        <div class="container banner-content">
+            <div class="banner-text">
+                <span class="badge">News</span>
+                <strong id="ann-title">Breaking News</strong>: 
+                <span id="ann-content">Latest updates...</span>
+            </div>
+            <button class="close-banner" onclick="document.getElementById('announcement-banner').style.display='none'"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
 
     <!-- Hero Section -->
     <section class="hero" id="home">

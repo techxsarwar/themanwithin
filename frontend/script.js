@@ -160,4 +160,73 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    
+    // 6. Register Analytics Hit Automatically
+    try {
+        fetch(`${API_BASE_URL}/api/analytics/hit`, { method: 'POST' }).catch(e => console.error("Analytics error", e));
+    } catch(e) {}
+
+    // 7. Load Featured Announcement across the site
+    const banner = document.getElementById('announcement-banner');
+    if (banner) {
+        fetch(`${API_BASE_URL}/api/admin/announcements`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.length > 0) {
+                    const latest = data[0]; // get the newest
+                    document.getElementById('ann-title').textContent = latest.title;
+                    document.getElementById('ann-content').textContent = latest.content.substring(0, 100) + (latest.content.length > 100 ? '...' : '');
+                    
+                    if(latest.image_url) {
+                        banner.style.backgroundImage = `linear-gradient(90deg, rgba(30,27,75,0.9), rgba(15,23,42,0.9)), url('${latest.image_url}')`;
+                        banner.style.backgroundSize = 'cover';
+                        banner.style.backgroundPosition = 'center';
+                    }
+                    
+                    banner.style.display = 'block';
+                }
+            })
+            .catch(err => console.error("Failed to load announcements:", err));
+    }
+
+    // 8. Load Public Testimonials if on Reviews page
+    const publicReviewsContainer = document.getElementById('public-reviews-container');
+    if (publicReviewsContainer) {
+        fetch(`${API_BASE_URL}/api/reviews`)
+            .then(res => res.json())
+            .then(reviews => {
+                if (!reviews || reviews.length === 0) {
+                    publicReviewsContainer.innerHTML = '<div style="text-align:center; padding:3rem; color:var(--text-muted); grid-column: 1 / -1;">No reviews yet. Check back soon!</div>';
+                    return;
+                }
+                
+                publicReviewsContainer.innerHTML = reviews.map(rev => {
+                    const stars = '<i class="fas fa-star"></i>'.repeat(rev.rating) + '<i class="far fa-star"></i>'.repeat(5 - rev.rating);
+                    return `
+                    <div class="review-card glass-panel reveal active">
+                        <div class="review-header">
+                            <h4>${escapeHTML(rev.name)}</h4>
+                            <div class="review-stars">${stars}</div>
+                        </div>
+                        <div class="review-date">${new Date(rev.created_at).toLocaleDateString()}</div>
+                        <p class="review-text">"${escapeHTML(rev.text)}"</p>
+                    </div>
+                `}).join('');
+            })
+            .catch(err => {
+                publicReviewsContainer.innerHTML = '<div style="color:#ef4444; padding:2rem; text-align:center; grid-column: 1 / -1;">Failed to load reviews.</div>';
+            });
+    }
 });
+
+// Utility HTML escape generic string function
+function escapeHTML(str) {
+    if(!str) return '';
+    return str.replace(/[&<>'"]/g, tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+    }[tag]));
+}

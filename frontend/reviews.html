@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reviews | The Man Within</title>
+    <meta name="description" content="Read heartfelt testimonials and authentic reviews from readers of The Man Within.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" href="data:,">
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container container">
+            <a href="index.html" class="logo">The Man Within</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">The Book</a></li>
+                <li><a href="author.html">The Author</a></li>
+                <li><a href="reviews.html" class="active">Reviews</a></li>
+                <li><a href="gallery.html">Gallery</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="index.html#buy" class="nav-cta">Get Your Copy</a></li>
+            </ul>
+            <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle Navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <header class="page-header" style="background: linear-gradient(to bottom, rgba(5,11,20,0.9), transparent);">
+        <div class="container reveal reveal-bottom">
+            <h1>Testimonials</h1>
+            <p class="sub-headline" style="margin: 0 auto; display: block;">Read what others have experienced deep within the pages.</p>
+            <div class="divider"></div>
+        </div>
+    </header>
+
+    <!-- Reviews Grid -->
+    <section class="gallery-section" style="padding-top: 2rem;">
+        <div class="container">
+            <div id="public-reviews-container" class="gallery-grid" style="grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); align-items: start;">
+                <!-- Injected via script.js -->
+                <div style="text-align: center; padding: 3rem; color: var(--text-muted); grid-column: 1 / -1;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p style="margin-top: 1rem;">Loading Reader Experiences...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-content">
+            <div class="footer-brand">
+                <h3>The Man Within</h3>
+                <p>An exploration of human emotion and truth.</p>
+                <div style="margin-top: 1.5rem; display: inline-flex; align-items: center; gap: 8px; background: rgba(14, 165, 233, 0.1); border: 1px solid rgba(14, 165, 233, 0.3); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; color: var(--highlight);">
+                    <i class="fas fa-check-circle"></i> Verified Writer's Pocket Book
+                </div>
+            </div>
+            <div class="footer-links">
+                <a href="index.html">Home</a>
+                <a href="about.html">About the Book</a>
+                <a href="author.html">Meet the Author</a>
+                <a href="gallery.html">Gallery</a>
+                <a href="contact.html">Contact</a>
+            </div>
+            <div class="footer-social">
+                <span>Share the journey:</span>
+                <div class="social-icons">
+                    <a href="https://instagram.com/officalthemanwithin" target="_blank"><i class="fab fa-instagram"></i> @officalthemanwithin</a>
+                    <a href="https://instagram.com/faisal_rasool_17" target="_blank"><i class="fab fa-instagram"></i> @faisal_rasool_17</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+            <p>&copy; 2026 Faisal Rasool. All Rights Reserved. Published by Writer's Pocket.</p>
+            <a href="/login" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; opacity: 0.5; transition: opacity 0.3s ease;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.5'"><i class="fas fa-lock" style="font-size: 0.75rem; margin-right: 4px;"></i>Admin Login</a>
+        </div>
+    </footer>
+
+    <!-- JS -->
+    <script src="script.js"></script>
+</body>
+</html>
