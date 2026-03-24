@@ -336,10 +336,11 @@ async function loadChatHistory() {
 }
 
 function connectWebSocket() {
+    console.log("Attempting WebSocket connection to:", CHAT_WS_URL);
     chatWs = new WebSocket(CHAT_WS_URL);
     
     chatWs.onopen = () => {
-        // Broadcast join event
+        console.log("WebSocket connection established!");
         chatWs.send(JSON.stringify({
             type: "join",
             sender: currentChatUser
@@ -347,13 +348,22 @@ function connectWebSocket() {
     };
 
     chatWs.onmessage = (event) => {
-        const msg = JSON.parse(event.data);
-        appendMessageToChat(msg);
-        scrollToChatBottom();
+        try {
+            const msg = JSON.parse(event.data);
+            console.log("Received message:", msg);
+            appendMessageToChat(msg);
+            scrollToChatBottom();
+        } catch(e) {
+            console.error("Error parsing WebSocket message:", e);
+        }
     };
 
-    chatWs.onclose = () => {
-        console.log("Chat connection closed. Reconnecting in 3s...");
+    chatWs.onerror = (error) => {
+        console.error("WebSocket Error:", error);
+    };
+
+    chatWs.onclose = (event) => {
+        console.warn("WebSocket connection closed:", event.code, event.reason);
         setTimeout(connectWebSocket, 3000);
     };
 }
