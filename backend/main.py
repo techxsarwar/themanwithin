@@ -10,9 +10,14 @@ from pydantic import BaseModel
 
 app = FastAPI(title="The Man Within - Backend", version="1.0.0")
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(BASE_DIR)
+FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
+DB_PATH = os.path.join(BASE_DIR, "contact.db")
+
 # Initialize SQLite DB
 def init_db():
-    conn = sqlite3.connect('contact.db')
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''
         CREATE TABLE IF NOT EXISTS messages (
@@ -43,8 +48,9 @@ def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
     return credentials.username
 
 # Mount assets directory for static files (images, etc)
-if os.path.exists("assets"):
-    app.mount("/assets", StaticFiles(directory="assets"), name="assets")
+assets_dir = os.path.join(FRONTEND_DIR, "assets")
+if os.path.exists(assets_dir):
+    app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
 # Pydantic model for contact form data
 class ContactMessage(BaseModel):
@@ -56,11 +62,11 @@ class ContactMessage(BaseModel):
 # Endpoints for serving static HTML pages
 @app.get("/", response_class=FileResponse)
 async def read_index():
-    return FileResponse("index.html")
+    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
 
 @app.get("/{page}.html", response_class=FileResponse)
 async def read_html_page(page: str):
-    file_path = f"{page}.html"
+    file_path = os.path.join(FRONTEND_DIR, f"{page}.html")
     if os.path.exists(file_path):
         return FileResponse(file_path)
     return HTMLResponse(content="<h1>404 Not Found</h1>", status_code=404)
@@ -68,11 +74,11 @@ async def read_html_page(page: str):
 # Endpoints for serving CSS and JS
 @app.get("/styles.css", response_class=FileResponse)
 async def read_css():
-    return FileResponse("styles.css")
+    return FileResponse(os.path.join(FRONTEND_DIR, "styles.css"))
 
 @app.get("/script.js", response_class=FileResponse)
 async def read_js():
-    return FileResponse("script.js")
+    return FileResponse(os.path.join(FRONTEND_DIR, "script.js"))
 
 # API endpoint for handling contact form submissions
 @app.post("/api/contact")
@@ -87,7 +93,7 @@ async def handle_contact_form(message: ContactMessage):
     print("-" * 40)
     
     # Save to SQLite database
-    conn = sqlite3.connect('contact.db')
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     c.execute("INSERT INTO messages (name, email, subject, message, timestamp) VALUES (?, ?, ?, ?, ?)",
@@ -103,13 +109,14 @@ async def handle_contact_form(message: ContactMessage):
 # Admin protected endpoints
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_dashboard(username: str = Depends(get_current_username)):
-    if os.path.exists("admin.html"):
-        return FileResponse("admin.html")
+    admin_path = os.path.join(FRONTEND_DIR, "admin.html")
+    if os.path.exists(admin_path):
+        return FileResponse(admin_path)
     return HTMLResponse("<h1>Admin properly authenticated but admin.html missing</h1>")
 
 @app.get("/api/admin/messages")
 async def get_admin_messages(username: str = Depends(get_current_username)):
-    conn = sqlite3.connect('contact.db')
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("SELECT * FROM messages ORDER BY id DESC")
