@@ -104,4 +104,58 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    // 5. Contact Form Submission Handling
+    const contactForm = document.getElementById('contactForm');
+    if (contactForm) {
+        contactForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = contactForm.querySelector('button[type="submit"]');
+            const formStatus = document.getElementById('formStatus');
+            const originalBtnText = submitBtn.textContent;
+            
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const subject = document.getElementById('subject').value;
+            const message = document.getElementById('message').value;
+
+            // Loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Sending...";
+            formStatus.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/contact', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, email, subject, message })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    formStatus.textContent = result.message;
+                    formStatus.style.color = 'var(--text-light)';
+                    formStatus.style.backgroundColor = 'rgba(16, 185, 129, 0.2)'; // Green tint
+                    formStatus.style.border = '1px solid rgba(16, 185, 129, 0.4)';
+                    formStatus.style.display = 'block';
+                    contactForm.reset();
+                } else {
+                    throw new Error(result.message || "Failed to send message");
+                }
+            } catch (error) {
+                formStatus.textContent = "Error: " + error.message;
+                formStatus.style.color = '#ef4444'; // Red color
+                formStatus.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                formStatus.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                formStatus.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
+            }
+        });
+    }
 });

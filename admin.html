@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | The Man Within</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        .dashboard-container {
+            margin-top: 2rem;
+            margin-bottom: 4rem;
+        }
+        .message-card {
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+        .message-card:hover {
+            transform: translateY(-2px);
+        }
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 1rem;
+        }
+        .message-meta {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .message-subject {
+            font-size: 1.25rem;
+            color: var(--highlight);
+            margin-bottom: 0.5rem;
+            font-family: 'Playfair Display', serif;
+        }
+        .message-body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            color: #d1d5db;
+        }
+        .no-messages {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+            border: 1px dashed rgba(255,255,255,0.2);
+            border-radius: 8px;
+        }
+        .refresh-btn {
+            background-color: transparent;
+            border: 1px solid var(--highlight);
+            color: var(--highlight);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        .refresh-btn:hover {
+            background-color: var(--highlight);
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar scrolled" id="navbar" style="position: relative; background: rgba(5, 5, 5, 0.95);">
+        <div class="nav-container container">
+            <a href="index.html" class="logo">The Man Within</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Live Site</a></li>
+                <li><a href="admin.html" class="active">Secure Portal</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="page-header" style="padding: 4rem 0 2rem;">
+        <div class="container active">
+            <h1>Inbox </h1>
+            <div class="divider"></div>
+            <p style="color: var(--text-muted); margin-top: 1.5rem; font-size: 1.1rem;">Manage your reader messages securely.</p>
+        </div>
+    </header>
+
+    <section class="dashboard-section">
+        <div class="container dashboard-container">
+            <div class="glass-panel" style="padding: 2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-lock" style="color: var(--highlight); font-size: 1.2rem;"></i> Admin Dashboard
+                    </h3>
+                    <button class="refresh-btn" onclick="fetchMessages()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
+                
+                <div id="messages-container">
+                    <div class="no-messages">Loading messages...</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer snippet -->
+    <footer style="margin-top: auto;">
+        <div class="footer-bottom">
+            <p>&copy; 2026 Admin Portal for The Man Within. Secured gracefully.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Use Fetch to securely pull data from our protected API endpoint
+        async function fetchMessages() {
+            const container = document.getElementById('messages-container');
+            container.innerHTML = '<div class="no-messages"><i class="fas fa-circle-notch fa-spin"></i> Loading messages...</div>';
+            
+            try {
+                // Since this page is loaded after basic auth, the browser will automatically send the cached credentials.
+                const response = await fetch('/api/admin/messages');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch messages. Unauthorized or Server Error.');
+                }
+                
+                const messages = await response.json();
+                
+                if (messages.length === 0) {
+                    container.innerHTML = '<div class="no-messages"><i class="fas fa-envelope-open" style="font-size: 2rem; margin-bottom: 1rem; display: block; color: rgba(255,255,255,0.2);"></i>No messages found. Your inbox is empty.</div>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                
+                messages.forEach(msg => {
+                    const card = document.createElement('div');
+                    card.className = 'glass-panel message-card';
+                    card.style.background = 'rgba(255, 255, 255, 0.02)';
+                    card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+                    
+                    const time = msg.timestamp ? msg.timestamp : 'Unknown Time';
+                    const subject = msg.subject || 'No Subject';
+                    
+                    // Simple escape function to prevent XSS if users put HTML in messages
+                    const escapeHTML = str => str.replace(/[&<>'"]/g, 
+                        tag => ({
+                            '&': '&amp;',
+                            '<': '&lt;',
+                            '>': '&gt;',
+                            "'": '&#39;',
+                            '"': '&quot;'
+                        }[tag]));
+                        
+                    card.innerHTML = `
+                        <div class="message-header">
+                            <div>
+                                <h4 style="margin: 0 0 0.5rem 0; font-size: 1.1rem;">${escapeHTML(msg.name)}</h4>
+                                <div class="message-meta"><a href="mailto:${escapeHTML(msg.email)}" style="color: var(--highlight); text-decoration: none;">${escapeHTML(msg.email)}</a></div>
+                            </div>
+                            <div class="message-meta">
+                                <i class="far fa-clock"></i> ${time}
+                            </div>
+                        </div>
+                        <div class="message-subject">${escapeHTML(subject)}</div>
+                        <div class="message-body">${escapeHTML(msg.message)}</div>
+                    `;
+                    container.appendChild(card);
+                });
+                
+            } catch (error) {
+                container.innerHTML = `<div class="no-messages" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);"><i class="fas fa-exclamation-triangle"></i> Error: ${error.message}</div>`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchMessages);
+    </script>
+</body>
+</html>
