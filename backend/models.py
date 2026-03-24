@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 from datetime import datetime, timezone
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean
 from sqlalchemy.orm import sessionmaker, declarative_base
 from pydantic import BaseModel
 
@@ -61,6 +61,14 @@ class Message(Base):
     email = Column(String)
     subject = Column(String)
     message = Column(Text)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    id = Column(Integer, primary_key=True, index=True)
+    sender = Column(String)
+    is_admin = Column(Boolean, default=False)
+    text = Column(Text)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 Base.metadata.create_all(bind=engine)

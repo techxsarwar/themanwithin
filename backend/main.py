@@ -1,7 +1,8 @@
 import os
 import secrets
+import json
 from datetime import datetime
-from fastapi import FastAPI, Request, Depends, HTTPException, status
+from fastapi import FastAPI, Request, Depends, HTTPException, status, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -12,7 +13,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from models import (
-    get_db, Announcement, SEOSetting, Analytics, SiteSetting, Review, Message,
+    get_db, SessionLocal, Announcement, SEOSetting, Analytics, SiteSetting, Review, Message, ChatMessage,
     AnnouncementCreate, AnnouncementUpdate, SEOSettingUpdate,
     SiteSettingUpdate, ReviewCreate
 )
@@ -58,6 +59,28 @@ class ContactMessage(BaseModel):
     email: str
     subject: str = ""
     message: str
+
+# --- WebSocket Chat Manager ---
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: list[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+
+    async def broadcast(self, message: dict):
+        for connection in self.active_connections:
+            try:
+                await connection.send_json(message)
+            except Exception:
+                pass
+
+manager = ConnectionManager()
 
 # Endpoints for serving static HTML pages
 @app.get("/", response_class=FileResponse)
@@ -314,3 +337,75 @@ async def delete_review(id: int, db=Depends(get_db), username: str = Depends(get
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+# Community Chat Endpoints
+@app.get("/api/chat/history")
+async def get_chat_history(db=Depends(get_db)):
+    try:
+        msgs = db.query(ChatMessage).order_by(ChatMessage.created_at.desc()).limit(100).all()
+        return [
+            {
+                "id": m.id,
+                "sender": m.sender,
+                "is_admin": m.is_admin,
+                "text": m.text,
+                "timestamp": m.created_at.isoformat() if m.created_at else ""
+            } for m in reversed(msgs)
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.websocket("/ws/chat")
+async def websocket_chat_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            try:
+                msg_data = json.loads(data)
+                
+                # If a join event, system announces
+                if msg_data.get("type") == "join":
+                    sender_name = msg_data.get("sender", "a new reader")
+                    welcome_text = f"The Man Within welcomes {sender_name} to the chat!"
+                    broadcast_data = {
+                        "sender": "The Man Within",
+                        "is_admin": True,
+                        "text": welcome_text,
+                        "timestamp": datetime.now().isoformat(),
+                        "is_system": True
+                    }
+                    await manager.broadcast(broadcast_data)
+                    continue
+
+                # Normal Chat Message
+                sender = msg_data.get("sender", "Guest")
+                text = msg_data.get("text", "")
+                is_admin = msg_data.get("is_admin", False)
+                
+                # Scope DB connection to message processing strictly
+                db = SessionLocal()
+                try:
+                    db_msg = ChatMessage(sender=sender, text=text, is_admin=is_admin)
+                    db.add(db_msg)
+                    db.commit()
+                    db.refresh(db_msg)
+                    
+                    broadcast_data = {
+                        "id": db_msg.id,
+                        "sender": db_msg.sender,
+                        "is_admin": db_msg.is_admin,
+                        "text": db_msg.text,
+                        "timestamp": db_msg.created_at.isoformat()
+                    }
+                finally:
+                    db.close()
+                    
+                await manager.broadcast(broadcast_data)
+            except json.JSONDecodeError:
+                pass
+            except Exception as e:
+                print(f"Chat WS error processing message: {e}")
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+

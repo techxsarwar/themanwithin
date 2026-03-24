@@ -264,3 +264,132 @@ window.closeAnnouncementModal = function() {
         sessionStorage.setItem('announcementSeen', 'true');
     }
 }
+
+// --- Community Chat Logic ---
+let chatWs = null;
+let currentChatUser = null;
+let currentChatIsAdmin = false;
+const CHAT_WS_URL = API_BASE_URL.replace(/^http/, 'ws') + "/ws/chat";
+
+function openChatModal() {
+    document.getElementById('chat-modal').style.display = 'flex';
+}
+
+function closeChatModal() {
+    document.getElementById('chat-modal').style.display = 'none';
+}
+
+async function joinChat(type) {
+    if (type === 'admin') {
+        const pass = document.getElementById('chat-admin-pass').value;
+        if (pass !== 'admin') {
+            alert("Incorrect admin password.");
+            return;
+        }
+        currentChatUser = "Faisal Rasool | Author";
+        currentChatIsAdmin = true;
+    } else {
+        const name = document.getElementById('chat-guest-name').value.trim();
+        if (!name) {
+            alert("Please enter a name.");
+            return;
+        }
+        currentChatUser = name;
+        currentChatIsAdmin = false;
+    }
+
+    document.getElementById('chat-auth-screen').classList.remove('active');
+    document.getElementById('chat-auth-screen').style.display = 'none';
+    document.getElementById('chat-interface-screen').style.display = 'flex';
+
+    await loadChatHistory();
+    connectWebSocket();
+}
+
+async function loadChatHistory() {
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/chat/history`);
+        if (res.ok) {
+            const history = await res.json();
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = '';
+            history.forEach(msg => appendMessageToChat(msg));
+            scrollToChatBottom();
+        }
+    } catch(e) {
+        console.error("Failed to load chat history", e);
+    }
+}
+
+function connectWebSocket() {
+    chatWs = new WebSocket(CHAT_WS_URL);
+    
+    chatWs.onopen = () => {
+        // Broadcast join event
+        chatWs.send(JSON.stringify({
+            type: "join",
+            sender: currentChatUser
+        }));
+    };
+
+    chatWs.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        appendMessageToChat(msg);
+        scrollToChatBottom();
+    };
+
+    chatWs.onclose = () => {
+        console.log("Chat connection closed. Reconnecting in 3s...");
+        setTimeout(connectWebSocket, 3000);
+    };
+}
+
+function appendMessageToChat(msg) {
+    const container = document.getElementById('chat-messages');
+    const div = document.createElement('div');
+    
+    if (msg.is_system) {
+        div.className = "chat-msg system";
+        div.textContent = msg.text;
+    } else {
+        const isSelf = msg.sender === currentChatUser && msg.is_admin === currentChatIsAdmin;
+        div.className = `chat-msg ${isSelf ? 'self' : ''}`;
+        
+        const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+        const adminTick = msg.is_admin ? '<i class="fas fa-check-circle" title="Verified Author" style="color:#1da1f2; margin-left: 5px;"></i>' : '';
+        const senderClass = msg.is_admin ? 'admin' : '';
+        
+        div.innerHTML = `
+            <div class="chat-msg-header">
+                <span class="chat-msg-sender ${senderClass}">${escapeHTML(msg.sender)}${adminTick}</span>
+                <span>${time}</span>
+            </div>
+            <div class="chat-msg-text">${escapeHTML(msg.text)}</div>
+        `;
+    }
+    container.appendChild(div);
+}
+
+function scrollToChatBottom() {
+    const container = document.getElementById('chat-messages');
+    container.scrollTop = container.scrollHeight;
+}
+
+function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if (!text || !chatWs) return;
+
+    chatWs.send(JSON.stringify({
+        sender: currentChatUser,
+        is_admin: currentChatIsAdmin,
+        text: text
+    }));
+    input.value = '';
+}
+
+function handleChatKeyPress(e) {
+    if (e.key === 'Enter') {
+        sendChatMessage();
+    }
+}
