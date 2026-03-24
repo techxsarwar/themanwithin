@@ -394,7 +394,7 @@ function appendMessageToChat(msg) {
         div.textContent = msg.text;
     } else {
         const isSelf = msg.sender === currentChatUser && msg.is_admin === currentChatIsAdmin;
-        div.className = `chat-msg ${isSelf ? 'self' : ''}`;
+        div.className = `chat-msg ${isSelf ? 'self' : 'received'}`;
         
         const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
         const adminTick = msg.is_admin ? '<i class="fas fa-check-circle" title="Verified Author" style="color:#1da1f2; margin-left: 5px;"></i>' : '';
@@ -403,9 +403,11 @@ function appendMessageToChat(msg) {
         div.innerHTML = `
             <div class="chat-msg-header">
                 <span class="chat-msg-sender ${senderClass}">${escapeHTML(msg.sender)}${adminTick}</span>
-                <span>${time}</span>
             </div>
             <div class="chat-msg-text">${escapeHTML(msg.text)}</div>
+            <div class="chat-msg-footer">
+                <span>${time}</span>
+            </div>
         `;
     }
     container.appendChild(div);

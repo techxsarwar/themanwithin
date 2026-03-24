@@ -73,16 +73,23 @@
                 <!-- Live Chat Screen -->
                 <div id="chat-interface-screen" class="chat-full-interface" style="display: none;">
                     <div class="chat-main-header">
-                        <div class="user-info">
-                            <span id="active-user-display" style="color: var(--highlight); font-weight: 600;"></span>
+                        <div class="chat-user-info">
+                            <div class="chat-avatar">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="chat-user-details">
+                                <h3>The Man Within Community</h3>
+                                <span id="active-user-display">Connecting...</span>
+                            </div>
                         </div>
-                        <div class="chat-status">
-                            <span class="status-dot"></span> Live Community
+                        <div class="chat-header-actions">
+                            <span class="status-dot"></span>
+                            <i class="fas fa-ellipsis-v" style="color: #8696a0; cursor: pointer; margin-left: 15px;"></i>
                         </div>
                     </div>
-
+                    
                     <div id="chat-messages" class="chat-messages-area">
-                        <!-- Messages go here -->
+                        <!-- Messages injected by JS -->
                     </div>
 
                     <div class="chat-footer-input">
