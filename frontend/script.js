@@ -167,23 +167,48 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch(e) {}
 
     // 7. Load Featured Announcement across the site
-    const banner = document.getElementById('announcement-banner');
-    if (banner) {
+    const modal = document.getElementById('announcement-modal');
+    if (modal && !sessionStorage.getItem('announcementSeen')) {
         fetch(`${API_BASE_URL}/api/admin/announcements`)
             .then(res => res.json())
             .then(data => {
                 if (data && data.length > 0) {
-                    const latest = data[0]; // get the newest
-                    document.getElementById('ann-title').textContent = latest.title;
-                    document.getElementById('ann-content').textContent = latest.content.substring(0, 100) + (latest.content.length > 100 ? '...' : '');
+                    const latest = data[0]; 
+                    document.getElementById('modal-title').textContent = latest.title;
                     
-                    if(latest.image_url) {
-                        banner.style.backgroundImage = `linear-gradient(90deg, rgba(30,27,75,0.9), rgba(15,23,42,0.9)), url('${latest.image_url}')`;
-                        banner.style.backgroundSize = 'cover';
-                        banner.style.backgroundPosition = 'center';
+                    const fullText = latest.content;
+                    const charLimit = 200;
+                    const descEl = document.getElementById('modal-desc');
+                    const readMoreContainer = document.getElementById('modal-read-more-container');
+                    
+                    if (fullText.length > charLimit) {
+                        descEl.textContent = fullText.substring(0, charLimit) + '...';
+                        
+                        const readMoreBtn = document.createElement('a');
+                        readMoreBtn.href = "#";
+                        readMoreBtn.className = "btn btn-secondary";
+                        readMoreBtn.style.padding = "0.5rem 1.2rem";
+                        readMoreBtn.style.fontSize = "0.9rem";
+                        readMoreBtn.innerHTML = 'Read More <i class="fas fa-chevron-down" style="margin-left:5px"></i>';
+                        
+                        readMoreBtn.onclick = (e) => {
+                            e.preventDefault();
+                            descEl.textContent = fullText;
+                            readMoreContainer.style.display = 'none';
+                        };
+                        readMoreContainer.appendChild(readMoreBtn);
+                    } else {
+                        descEl.textContent = fullText;
                     }
                     
-                    banner.style.display = 'block';
+                    const imageContainer = document.getElementById('modal-image-container');
+                    if(latest.image_url) {
+                        imageContainer.style.backgroundImage = `url('${latest.image_url}')`;
+                    } else {
+                        imageContainer.style.display = 'none';
+                    }
+                    
+                    modal.style.display = 'flex';
                 }
             })
             .catch(err => console.error("Failed to load announcements:", err));
@@ -229,4 +254,13 @@ function escapeHTML(str) {
         "'": '&#39;',
         '"': '&quot;'
     }[tag]));
+}
+
+// Global modal closer exposed to window so onclick works
+window.closeAnnouncementModal = function() {
+    const modal = document.getElementById('announcement-modal');
+    if(modal) {
+        modal.style.display = 'none';
+        sessionStorage.setItem('announcementSeen', 'true');
+    }
 }

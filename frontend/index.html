@@ -38,15 +38,18 @@
         </div>
     </nav>
 
-    <!-- Top Announcement Banner -->
-    <div id="announcement-banner" class="announcement-banner" style="display: none;">
-        <div class="container banner-content">
-            <div class="banner-text">
-                <span class="badge">News</span>
-                <strong id="ann-title">Breaking News</strong>: 
-                <span id="ann-content">Latest updates...</span>
+    <!-- Announcement Modal -->
+    <div id="announcement-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass-panel">
+            <button class="close-modal" onclick="closeAnnouncementModal()"><i class="fas fa-times"></i></button>
+            <div id="modal-image-container" class="modal-image"></div>
+            <div class="modal-text">
+                <span class="badge">Announcement</span>
+                <h2 id="modal-title">Breaking News</h2>
+                <div class="divider" style="margin: 0.5rem 0 1rem; width: 50px;"></div>
+                <p id="modal-desc" style="white-space: pre-wrap;">Latest updates...</p>
+                <div id="modal-read-more-container" style="margin-top: 1.5rem;"></div>
             </div>
-            <button class="close-banner" onclick="document.getElementById('announcement-banner').style.display='none'"><i class="fas fa-times"></i></button>
         </div>
     </div>
 
