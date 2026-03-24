@@ -447,18 +447,26 @@ async function deleteChatMessage(id) {
     if (!confirm("Are you sure you want to delete this message?")) return;
     
     try {
+        console.log(`Attempting to delete message ${id} at ${API_BASE_URL}/api/chat/messages/${id}`);
         const response = await fetch(`${API_BASE_URL}/api/chat/messages/${id}`, {
             method: 'DELETE',
             headers: {
-                'Authorization': 'Basic ' + btoa('faisal:admin') // Use current session credentials
-            }
+                'Authorization': 'Basic ' + btoa('faisal:admin'),
+                'Content-Type': 'application/json'
+            },
+            mode: 'cors'
         });
         
-        if (!response.ok) throw new Error("Failed to delete message");
-        // Removal from UI is handled by WebSocket broadcast
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Delete failed: ${response.status} ${response.statusText}`, errorText);
+            throw new Error(`Failed to delete message: ${response.status}`);
+        }
+        
+        console.log(`Message ${id} deleted successfully (awaiting WS broadcast)`);
     } catch (error) {
-        console.error("Delete error:", error);
-        alert("Error deleting message. Please try again.");
+        console.error("Delete error details:", error);
+        alert(`Error deleting message: ${error.message}. Please check your connection and try again.`);
     }
 }
 
