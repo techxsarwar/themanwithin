@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formStatus.style.display = 'none';
 
             try {
-                const response = await fetch('/api/contact', {
+                const response = await fetch(`${API_BASE_URL}/api/contact`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

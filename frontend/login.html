@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | The Man Within</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="config.js"></script>
+    <style>
+        .login-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 70vh;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            padding: 2.5rem;
+            text-align: left;
+        }
+        /* Fullscreen Cinematic Loading Screen */
+        #server-boot-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #030303;
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #0ea5e9;
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden;
+        }
+        .boot-terminal {
+            width: 80%;
+            max-width: 800px;
+            height: 60vh;
+            text-align: left;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        .boot-line {
+            opacity: 0;
+            transform: translateY(10px);
+            margin: 0.5rem 0;
+            font-size: 1.1rem;
+            text-shadow: 0 0 5px rgba(14, 165, 233, 0.5);
+            animation: linePop 0.3s forwards;
+        }
+        @keyframes linePop {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .progress-container {
+            width: 80%;
+            max-width: 600px;
+            height: 6px;
+            background: rgba(14, 165, 233, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid rgba(14, 165, 233, 0.3);
+            position: relative;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #0ea5e9;
+            box-shadow: 0 0 10px #0ea5e9, 0 0 20px #0ea5e9;
+            transition: width linear;
+        }
+        .timer-text {
+            margin-top: 1rem;
+            font-size: 2rem;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(14, 165, 233, 0.8);
+        }
+        /* Glitch effect for the logo text */
+        .glitch-text {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; text-shadow: 0 0 10px #0ea5e9; }
+            50% { opacity: 0.6; text-shadow: 0 0 20px #0ea5e9, 0 0 30px #0ea5e9; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar scrolled" id="navbar" style="position: relative; background: rgba(5, 5, 5, 0.95);">
+        <div class="nav-container container">
+            <a href="index.html" class="logo">The Man Within</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Live Site</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container login-wrapper" id="login-view">
+        <div class="glass-panel login-card reveal reveal-bottom active">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <i class="fas fa-fingerprint" style="font-size: 3rem; color: var(--highlight); margin-bottom: 1rem;"></i>
+                <h2 style="font-family: 'Playfair Display', serif;">Secure Access</h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Identify yourself to enter the mainframe.</p>
+            </div>
+            
+            <form id="loginForm">
+                <div id="loginStatus" style="display: none; margin-bottom: 1.5rem; padding: 10px; border-radius: 4px; font-weight: 500; font-size: 0.9rem;"></div>
+                
+                <div class="form-group">
+                    <input type="text" id="username" placeholder="Admin ID" autocomplete="off" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="password" placeholder="Passcode" autocomplete="off" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; display: flex; justify-content: center; gap: 10px;">
+                    <i class="fas fa-unlock-alt"></i> Authenticate
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 30 Second Cinematic Timer Overlay -->
+    <div id="server-boot-screen">
+        <div class="glitch-text">SERVER BOOT SEQUENCE</div>
+        <div class="boot-terminal" id="terminal">
+            <!-- Lines will be injected here via JS -->
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="timer-text" id="countdown">30.00s</div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        
+        // Auto-redirect if already logged in
+        if (localStorage.getItem('admin_token')) {
+            window.location.href = '/admin';
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = loginForm.querySelector('button[type="submit"]');
+            const statusDiv = document.getElementById('loginStatus');
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            
+            // Generate basic auth token
+            const token = 'Basic ' + btoa(user + ':' + pass);
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Verifying...';
+            statusDiv.style.display = 'none';
+
+            try {
+                // Test the credentials against the secure endpoint
+                const response = await fetch(`${API_BASE_URL}/api/admin/messages`, {
+                    headers: { 'Authorization': token }
+                });
+
+                if (response.ok) {
+                    // Credentials are valid. Kick off the 30-second sequence!
+                    startBootSequence(token);
+                } else {
+                    throw new Error('Access Denied. Incorrect credentials.');
+                }
+            } catch (error) {
+                statusDiv.textContent = error.message;
+                statusDiv.style.color = '#ef4444'; 
+                statusDiv.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                statusDiv.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                statusDiv.style.display = 'block';
+                
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-unlock-alt"></i> Authenticate';
+            }
+        });
+
+        function startBootSequence(validToken) {
+            // Hide normal UI and show cinematic screen
+            document.body.style.overflow = 'hidden';
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('navbar').style.display = 'none';
+            
+            const bootScreen = document.getElementById('server-boot-screen');
+            bootScreen.style.display = 'flex';
+            
+            const progressBar = document.getElementById('progress-bar');
+            const countdownEl = document.getElementById('countdown');
+            const terminal = document.getElementById('terminal');
+            
+            // 30 Seconds configuration
+            const DURATION = 30000; 
+            const startTime = Date.now();
+            
+            // Hacker terminal lines to display over 30 seconds
+            const lines = [
+                "INIT: Establishing handshake with Node-Prime...",
+                "SUCCESS: Handshake complete. Latency 14ms.",
+                "WARN: Anomalous network packet detected. Analyzing...",
+                "RESOLVED: Packet cleared.",
+                "ROUTINE: Bypassing level 4 security firewalls...",
+                "ROUTINE: Injecting master authorization token...",
+                "Auth Token Accepted. Validating checksums...",
+                "OK: Checksum matches. Verifying RSA-4096 signature...",
+                "OK: Signature verified.",
+                "SYSTEM: Booting primary database partitions...",
+                "SYSTEM: Loading Contact schema...",
+                "SYSTEM: Mounting encrypted memory sectors...",
+                "Decrypting stored messages (1/3)...",
+                "Decrypting stored messages (2/3)...",
+                "Decrypting stored messages (3/3)...",
+                "SUCCESS: Inbox completely decrypted.",
+                "ROUTINE: Establishing secure TLS tunnel...",
+                "OK: Tunnel secured.",
+                "SYSTEM: Initializing Admin Dashboard interface...",
+                "SYSTEM: Finalizing environmental assets...",
+                "Almost ready...",
+                "Preparing to grant access...",
+                "SESSION: Access Granted. Welcome, Admin."
+            ];
+            
+            let currentLineIndex = 0;
+            const lineInterval = DURATION / (lines.length + 2);
+
+            // Print lines periodically
+            const lineTimer = setInterval(() => {
+                if (currentLineIndex < lines.length) {
+                    const lineEl = document.createElement('div');
+                    lineEl.className = 'boot-line';
+                    lineEl.textContent = `> ${lines[currentLineIndex]}`;
+                    terminal.appendChild(lineEl);
+                    
+                    // Keep at bottom
+                    while(terminal.children.length > 10) {
+                        terminal.removeChild(terminal.firstChild);
+                    }
+                    
+                    currentLineIndex++;
+                }
+            }, lineInterval);
+
+            // Progress bar and countdown animation loop
+            const animationLoop = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                const remaining = Math.max(0, DURATION - elapsed);
+                const percent = Math.min(100, (elapsed / DURATION) * 100);
+                
+                progressBar.style.width = percent + '%';
+                countdownEl.textContent = (remaining / 1000).toFixed(2) + 's';
+                
+                if (elapsed >= DURATION) {
+                    clearInterval(animationLoop);
+                    clearInterval(lineTimer);
+                    countdownEl.textContent = "0.00s";
+                    
+                    // Final action: save token and redirect
+                    localStorage.setItem('admin_token', validToken);
+                    window.location.href = '/admin';
+                }
+            }, 16); // ~60fps smooth animation
+        }
+    </script>
+</body>
+</html>

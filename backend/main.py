@@ -6,9 +6,18 @@ from fastapi import FastAPI, Request, Depends, HTTPException, status
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 app = FastAPI(title="The Man Within - Backend", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(BASE_DIR)
@@ -106,13 +115,20 @@ async def handle_contact_form(message: ContactMessage):
         "message": "Thank you! Your message has been received."
     })
 
-# Admin protected endpoints
+# Admin endpoints
+@app.get("/login", response_class=HTMLResponse)
+async def login_page():
+    login_path = os.path.join(FRONTEND_DIR, "login.html")
+    if os.path.exists(login_path):
+        return FileResponse(login_path)
+    return HTMLResponse("<h1>login.html missing</h1>", status_code=404)
+
 @app.get("/admin", response_class=HTMLResponse)
-async def admin_dashboard(username: str = Depends(get_current_username)):
+async def admin_dashboard():
     admin_path = os.path.join(FRONTEND_DIR, "admin.html")
     if os.path.exists(admin_path):
         return FileResponse(admin_path)
-    return HTMLResponse("<h1>Admin properly authenticated but admin.html missing</h1>")
+    return HTMLResponse("<h1>admin.html missing</h1>", status_code=404)
 
 @app.get("/api/admin/messages")
 async def get_admin_messages(username: str = Depends(get_current_username)):
