@@ -687,7 +687,8 @@
                     loadAnnouncements();
                     loadDashboardStats();
                 } catch(e) {
-                    alert("Failed to delete announcement");
+                    console.error("Delete announcement error", e);
+                    alert("Failed to delete announcement: " + e.message);
                 }
             }
         }
