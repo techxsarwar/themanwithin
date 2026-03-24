@@ -17,7 +17,7 @@ To get this live on Render, follow these steps:
    - Click "New" -> **Web Service**.
    - Select your GitHub repository.
    - Set **Environment** to `Python 3`.
-   - Set **Build Command** to `pip install -r requirements.txt`
+   - Set **Build Command** to `pip install -r backend/requirements.txt`
    - Set **Start Command** to `uvicorn backend.main:app --host 0.0.0.0 --port 10000`
    - Click "Create Web Service".
 
