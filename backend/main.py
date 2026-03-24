@@ -22,7 +22,15 @@ app = FastAPI(title="The Man Within - Backend", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "https://themanwithin.onrender.com",
+        "https://themanwithin.netlify.app",
+        "https://the-man-within.netlify.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
