@@ -1,18 +1,11 @@
 // Global Configuration & State
-let API_BASE_URL = window.location.origin;
-const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-let CHAT_WS_URL = `${wsProtocol}//${window.location.host}/ws/chat`;
+// Hardcoded to Render to support multi-domain hosting (e.g. Netlify frontend)
+let API_BASE_URL = "https://themanwithin.onrender.com";
+const CHAT_WS_URL = "wss://themanwithin.onrender.com/ws/chat";
 let heartbeatInterval = null;
 let chatWs = null;
 let currentChatUser = localStorage.getItem('chatUser');
 let currentChatIsAdmin = localStorage.getItem('chatIsAdmin') === 'true';
-
-// Fallback for local file testing
-if (window.location.protocol === 'file:') {
-    API_BASE_URL = "https://themanwithin.onrender.com";
-    CHAT_WS_URL = "wss://themanwithin.onrender.com/ws/chat";
-    console.warn("Running via file:// protocol. Falling back to production:", { API_BASE_URL, CHAT_WS_URL });
-}
 
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', () => {
@@ -177,7 +170,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 6. Register Analytics Hit Automatically
     try {
-        fetch(`${API_BASE_URL}/api/analytics/hit`, { method: 'POST' }).catch(e => console.error("Analytics error", e));
+        fetch(`${API_BASE_URL}/api/analytics/hit`, { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ referrer: document.referrer || "direct" }) 
+        }).catch(e => console.error("Analytics error", e));
     } catch(e) {}
 
     // 7. Load Featured Announcement across the site
