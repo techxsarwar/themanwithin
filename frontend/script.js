@@ -1,3 +1,5 @@
+const API_BASE_URL = "https://themanwithin.onrender.com";
+
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', () => {
     
