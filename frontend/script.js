@@ -350,7 +350,7 @@ function connectWebSocket() {
     chatWs = new WebSocket(CHAT_WS_URL);
     
     chatWs.onopen = () => {
-        console.log("WebSocket connection established!");
+        console.log("Successfully connected to the Villain Lair!");
         chatWs.send(JSON.stringify({
             type: "join",
             sender: currentChatUser
