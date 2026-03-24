@@ -1,10 +1,13 @@
-// Explicitly build WebSocket URL based on current host
+// Global Configuration & State
+let API_BASE_URL = window.location.origin;
 const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 let CHAT_WS_URL = `${wsProtocol}//${window.location.host}/ws/chat`;
 let heartbeatInterval = null;
-let API_BASE_URL = window.location.origin;
+let chatWs = null;
+let currentChatUser = localStorage.getItem('chatUser');
+let currentChatIsAdmin = localStorage.getItem('chatIsAdmin') === 'true';
 
-// If the user opens the file directly (file://), fall back to production API & WS
+// Fallback for local file testing
 if (window.location.protocol === 'file:') {
     API_BASE_URL = "https://themanwithin.onrender.com";
     CHAT_WS_URL = "wss://themanwithin.onrender.com/ws/chat";
@@ -253,6 +256,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 publicReviewsContainer.innerHTML = '<div style="color:#ef4444; padding:2rem; text-align:center; grid-column: 1 / -1;">Failed to load reviews.</div>';
             });
     }
+
+    // New: Community Chat Auto-join Check
+    if (document.getElementById('community-chat-container')) {
+        if (currentChatUser) {
+            showChatInterface();
+        }
+    }
 });
 
 // Utility HTML escape generic string function
@@ -277,24 +287,9 @@ window.closeAnnouncementModal = function() {
 }
 
 // --- Community Chat Logic ---
-let chatWs = null;
-let currentChatUser = localStorage.getItem('chatUser');
-let currentChatIsAdmin = localStorage.getItem('chatIsAdmin') === 'true';
 
-// Explicitly build WebSocket URL based on current host
-const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-const CHAT_WS_URL = `${wsProtocol}//${window.location.host}/ws/chat`;
-let heartbeatInterval = null;
 
-// Auto-join if already logged in on community page
-document.addEventListener('DOMContentLoaded', () => {
-    // Check if we are on the community page by looking for the chat container
-    if (document.getElementById('community-chat-container')) {
-        if (currentChatUser) {
-            showChatInterface();
-        }
-    }
-});
+
 
 function showChatInterface() {
     const authScreen = document.getElementById('chat-auth-screen');
