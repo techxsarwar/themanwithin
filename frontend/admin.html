@@ -803,8 +803,10 @@
                 try {
                     await apiCall(`/api/reviews/${id}`, 'DELETE');
                     loadReviews();
+                    loadDashboardStats();
                 } catch(e) {
-                    alert("Failed to delete review");
+                    console.error("Delete error", e);
+                    alert("Failed to delete review: " + e.message);
                 }
             }
         }
