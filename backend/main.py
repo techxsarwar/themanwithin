@@ -256,7 +256,7 @@ async def get_analytics(db=Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/analytics/hit")
-async def register_hit(db=Depends(get_db)):
+async def register_hit(data: dict = None, db=Depends(get_db)):
     try:
         stat = db.query(Analytics).first()
         if not stat:
