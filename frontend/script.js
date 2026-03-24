@@ -1,9 +1,14 @@
+// Explicitly build WebSocket URL based on current host
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+let CHAT_WS_URL = `${wsProtocol}//${window.location.host}/ws/chat`;
+let heartbeatInterval = null;
 let API_BASE_URL = window.location.origin;
 
-// If the user opens the file directly (file://), fall back to production API
+// If the user opens the file directly (file://), fall back to production API & WS
 if (window.location.protocol === 'file:') {
     API_BASE_URL = "https://themanwithin.onrender.com";
-    console.warn("Running via file:// protocol. Falling back to production API:", API_BASE_URL);
+    CHAT_WS_URL = "wss://themanwithin.onrender.com/ws/chat";
+    console.warn("Running via file:// protocol. Falling back to production:", { API_BASE_URL, CHAT_WS_URL });
 }
 
 // Wait for DOM to load
