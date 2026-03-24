@@ -363,6 +363,22 @@ async def get_chat_history(db=Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.delete("/api/chat/messages/{id}")
+async def delete_chat_message(id: int, db=Depends(get_db), username: str = Depends(get_current_username)):
+    try:
+        msg = db.query(ChatMessage).filter(ChatMessage.id == id).first()
+        if not msg:
+            raise HTTPException(status_code=404, detail="Message not found")
+        db.delete(msg)
+        db.commit()
+        await manager.broadcast({"type": "delete", "id": id})
+        return {"status": "success"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.websocket("/ws/chat")
 async def websocket_chat_endpoint(websocket: WebSocket):
     print(f"New chat connection attempt: {websocket.client}")
