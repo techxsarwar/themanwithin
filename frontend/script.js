@@ -267,16 +267,30 @@ window.closeAnnouncementModal = function() {
 
 // --- Community Chat Logic ---
 let chatWs = null;
-let currentChatUser = null;
-let currentChatIsAdmin = false;
+let currentChatUser = localStorage.getItem('chatUser');
+let currentChatIsAdmin = localStorage.getItem('chatIsAdmin') === 'true';
 const CHAT_WS_URL = API_BASE_URL.replace(/^http/, 'ws') + "/ws/chat";
 
-function openChatModal() {
-    document.getElementById('chat-modal').style.display = 'flex';
-}
+// Auto-join if already logged in on community page
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.location.pathname.includes('community.html')) {
+        if (currentChatUser) {
+            showChatInterface();
+        }
+    }
+});
 
-function closeChatModal() {
-    document.getElementById('chat-modal').style.display = 'none';
+function showChatInterface() {
+    const authScreen = document.getElementById('chat-auth-screen');
+    const chatScreen = document.getElementById('chat-interface-screen');
+    const userDisplay = document.getElementById('active-user-display');
+    
+    if (authScreen) authScreen.style.display = 'none';
+    if (chatScreen) chatScreen.style.display = 'flex';
+    if (userDisplay) userDisplay.textContent = `Active as: ${currentChatUser}`;
+    
+    loadChatHistory();
+    connectWebSocket();
 }
 
 async function joinChat(type) {
@@ -298,12 +312,11 @@ async function joinChat(type) {
         currentChatIsAdmin = false;
     }
 
-    document.getElementById('chat-auth-screen').classList.remove('active');
-    document.getElementById('chat-auth-screen').style.display = 'none';
-    document.getElementById('chat-interface-screen').style.display = 'flex';
+    // Persist session
+    localStorage.setItem('chatUser', currentChatUser);
+    localStorage.setItem('chatIsAdmin', currentChatIsAdmin);
 
-    await loadChatHistory();
-    connectWebSocket();
+    showChatInterface();
 }
 
 async function loadChatHistory() {

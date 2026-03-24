@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About the Book | The Man Within</title>
+    <title>Community | The Man Within</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" href="data:,">
 </head>
-<body>
+<body class="community-page">
 
     <!-- Navigation -->
     <nav class="navbar" id="navbar">
@@ -19,9 +19,10 @@
             <a href="index.html" class="logo">The Man Within</a>
             <ul class="nav-links">
                 <li><a href="index.html">Home</a></li>
-                <li><a href="about.html" class="active">The Book</a></li>
+                <li><a href="about.html">The Book</a></li>
                 <li><a href="author.html">The Author</a></li>
-                <li><a href="community.html">Community</a></li>
+                <li><a href="community.html" class="active">Community</a></li>
+                <li><a href="reviews.html">Reviews</a></li>
                 <li><a href="gallery.html">Gallery</a></li>
                 <li><a href="contact.html">Contact</a></li>
                 <li><a href="index.html#buy" class="nav-cta">Get Your Copy</a></li>
@@ -34,31 +35,69 @@
 
     <header class="page-header">
         <div class="container reveal reveal-bottom">
-            <h1>About the Book</h1>
+            <h1>The Community</h1>
+            <p class="sub-headline" style="margin: 0 auto;">Connect with readers and the author in real-time.</p>
             <div class="divider"></div>
         </div>
     </header>
 
-    <section class="about-book" style="padding-top: 2rem; padding-bottom: 6rem;">
+    <section class="community-section">
         <div class="container">
-            <div class="about-grid">
-                <div class="about-img reveal reveal-left">
-                    <img src="assets/817pYZLksEL._SY425_.jpg" alt="The Man Within Back Cover">
+            <div id="community-chat-container" class="community-chat-container glass-panel reveal reveal-bottom">
+                
+                <!-- Lobby / Join Screen -->
+                <div id="chat-auth-screen" class="chat-lobby active">
+                    <div class="lobby-content">
+                        <i class="fas fa-comments lobby-icon"></i>
+                        <h2>Join the Conversation</h2>
+                        <p>Share your thoughts, ask questions, and connect with other readers of "The Man Within".</p>
+                        
+                        <div class="join-options">
+                            <div class="option-card">
+                                <h3>Reader Guest</h3>
+                                <input type="text" id="chat-guest-name" class="form-control" placeholder="Enter your name">
+                                <button class="btn btn-secondary" onclick="joinChat('guest')">Enter Community</button>
+                            </div>
+                            
+                            <div class="divider-vertical">OR</div>
+                            
+                            <div class="option-card">
+                                <h3>Author Login</h3>
+                                <input type="password" id="chat-admin-pass" class="form-control" placeholder="Admin Password">
+                                <button class="btn btn-primary" onclick="joinChat('admin')">Verify Identity</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="about-text glass-panel reveal reveal-right">
-                    <h3>A journey into the silent echoes of the heart.</h3>
-                    <p><em>The Man Within</em> is not just a collection of thoughts; it is a mirror held up to the silent struggles we all face. In a world full of noise, this book speaks through silence, navigating the quiet corners of the human heart.</p>
-                    <p>The chapters delve deeper into the masks we wear in our daily lives—the smiles that hide sorrow, the silence that screams, and the courage it takes to confront one's true self.</p>
-                    <p>It invites the reader to look deeper — beyond the facade, behind the eyes, and into the places we often keep hidden, even from ourselves.</p>
-                    <blockquote class="italic-quote">
-                        "This is not his story. It's yours too."
-                    </blockquote>
+
+                <!-- Live Chat Screen -->
+                <div id="chat-interface-screen" class="chat-full-interface" style="display: none;">
+                    <div class="chat-main-header">
+                        <div class="user-info">
+                            <span id="active-user-display" style="color: var(--highlight); font-weight: 600;"></span>
+                        </div>
+                        <div class="chat-status">
+                            <span class="status-dot"></span> Live Community
+                        </div>
+                    </div>
+
+                    <div id="chat-messages" class="chat-messages-area">
+                        <!-- Messages go here -->
+                    </div>
+
+                    <div class="chat-footer-input">
+                        <input type="text" id="chat-input" class="form-control" placeholder="Type your message here..." onkeypress="handleChatKeyPress(event)">
+                        <button class="btn btn-primary send-btn" onclick="sendChatMessage()">
+                            <i class="fas fa-paper-plane"></i> <span>Send</span>
+                        </button>
+                    </div>
                 </div>
+
             </div>
         </div>
     </section>
 
-    <!-- Footer snippet -->
+    <!-- Footer -->
     <footer>
         <div class="container footer-content">
             <div class="footer-brand">
@@ -91,8 +130,5 @@
     </footer>
 
     <script src="script.js"></script>
-    
-        </div>
-    </div>
 </body>
 </html>
