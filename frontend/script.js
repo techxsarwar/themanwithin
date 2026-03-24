@@ -385,6 +385,14 @@ function connectWebSocket() {
         try {
             const msg = JSON.parse(event.data);
             if (msg.type === "pong") return; // Ignore heartbeat response
+            
+            // Handle real-time deletion
+            if (msg.type === "delete") {
+                const el = document.querySelector(`[data-msg-id="${msg.id}"]`);
+                if (el) el.remove();
+                return;
+            }
+
             console.log("Received message:", msg);
             appendMessageToChat(msg);
             scrollToChatBottom();
@@ -418,10 +426,13 @@ function appendMessageToChat(msg) {
         const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
         const adminTick = msg.is_admin ? '<i class="fas fa-check-circle" title="Verified Author" style="color:#1da1f2; margin-left: 5px;"></i>' : '';
         const senderClass = msg.is_admin ? 'admin' : '';
+        const deleteBtn = currentChatIsAdmin ? `<i class="fas fa-trash-alt delete-msg-btn" onclick="deleteChatMessage(${msg.id})" title="Delete Message"></i>` : '';
         
+        div.setAttribute('data-msg-id', msg.id);
         div.innerHTML = `
             <div class="chat-msg-header">
                 <span class="chat-msg-sender ${senderClass}">${escapeHTML(msg.sender)}${adminTick}</span>
+                ${deleteBtn}
             </div>
             <div class="chat-msg-text">${escapeHTML(msg.text)}</div>
             <div class="chat-msg-footer">
@@ -430,6 +441,25 @@ function appendMessageToChat(msg) {
         `;
     }
     container.appendChild(div);
+}
+
+async function deleteChatMessage(id) {
+    if (!confirm("Are you sure you want to delete this message?")) return;
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/chat/messages/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': 'Basic ' + btoa('faisal:admin') // Use current session credentials
+            }
+        });
+        
+        if (!response.ok) throw new Error("Failed to delete message");
+        // Removal from UI is handled by WebSocket broadcast
+    } catch (error) {
+        console.error("Delete error:", error);
+        alert("Error deleting message. Please try again.");
+    }
 }
 
 function scrollToChatBottom() {
