@@ -1,4 +1,10 @@
-const API_BASE_URL = window.location.origin;
+let API_BASE_URL = window.location.origin;
+
+// If the user opens the file directly (file://), fall back to production API
+if (window.location.protocol === 'file:') {
+    API_BASE_URL = "https://themanwithin.onrender.com";
+    console.warn("Running via file:// protocol. Falling back to production API:", API_BASE_URL);
+}
 
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', () => {
