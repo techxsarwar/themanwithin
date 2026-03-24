@@ -945,73 +945,28 @@ footer {
     z-index: 1;
 }
 
-/* COMMUNITY PAGE & CHAT */
+/* COMMUNITY PAGE & CHAT OVERHAUL */
+.community-page {
+    overflow-y: auto !important;
+    height: auto !important;
+}
+
 .community-section {
     padding: 2rem 0 8rem;
     min-height: 80vh;
 }
 
 .community-chat-container {
-    height: 700px;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-    overflow: hidden;
-    border: 1px solid rgba(56, 189, 248, 0.2);
-    border-radius: 12px;
-}
-
-/* Lobby / Join Screen */
-.chat-lobby {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    background: radial-gradient(circle at center, rgba(30, 27, 75, 0.4), transparent);
-}
-
-.lobby-content {
-    max-width: 600px;
-    padding: 2rem;
-}
-
-.lobby-icon {
-    font-size: 4rem;
-    color: var(--highlight);
-    margin-bottom: 1.5rem;
-    filter: drop-shadow(0 0 15px var(--glow));
-}
-
-.lobby-content h2 {
-    margin-bottom: 1rem;
-    font-size: 2rem;
-}
-
-.lobby-content p {
-    color: var(--text-muted);
-    margin-bottom: 3rem;
-    font-size: 1.1rem;
-}
-
-.join-options {
-    display: flex;
-    gap: 3rem;
-    align-items: center;
-    justify-content: center;
-}
-
-.community-chat-container {
-    height: 700px;
-    max-height: 90vh;
+    height: 650px; /* Base height */
+    max-height: 85vh;
     display: flex;
     flex-direction: column;
     padding: 0;
     overflow: hidden;
     background: #0b141a; /* WhatsApp Dark BG */
     border: 1px solid #202c33;
-    border-radius: 0; /* WhatsApp style usually sharp or very slight round */
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
 /* Lobby / Join Screen */
