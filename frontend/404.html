@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found | The Man Within</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" href="data:,">
+    <style>
+        .error-section {
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8rem 0;
+            position: relative;
+        }
+        .error-glitch {
+            font-size: clamp(6rem, 15vw, 12rem);
+            font-family: var(--font-heading);
+            font-weight: 700;
+            color: var(--highlight);
+            text-shadow: 0 0 40px var(--glow);
+            line-height: 1;
+            margin-bottom: 1rem;
+            position: relative;
+            display: inline-block;
+        }
+        .error-message {
+            font-size: clamp(1.2rem, 3vw, 2rem);
+            color: var(--text-main);
+            margin-bottom: 2rem;
+            letter-spacing: 1px;
+        }
+        .error-desc {
+            color: var(--text-muted);
+            max-width: 500px;
+            margin: 0 auto 3rem;
+            font-size: 1.1rem;
+        }
+        .error-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40vw;
+            color: rgba(255,255,255,0.01);
+            font-family: var(--font-heading);
+            z-index: -1;
+            pointer-events: none;
+            user-select: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container container">
+            <a href="index.html" class="logo">The Man Within</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">The Book</a></li>
+                <li><a href="author.html">The Author</a></li>
+                <li><a href="reviews.html">Reviews</a></li>
+                <li><a href="gallery.html">Gallery</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li><a href="index.html#buy" class="nav-cta">Get Your Copy</a></li>
+            </ul>
+            <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle Navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Error Content -->
+    <section class="error-section">
+        <div class="error-bg">404</div>
+        <div class="container reveal">
+            <div class="error-glitch">404</div>
+            <h1 class="error-message">Lost in the Pages</h1>
+            <p class="error-desc">The path you are looking for has faded into the shadows. The page may have been moved, deleted, or perhaps it never existed.</p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="index.html" class="btn btn-primary"><i class="fas fa-arrow-left" style="margin-right: 8px;"></i> Return Home</a>
+                <a href="contact.html" class="btn btn-secondary">Report an Issue</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-content">
+            <div class="footer-brand">
+                <h3>The Man Within</h3>
+                <p>An exploration of human emotion and truth.</p>
+            </div>
+            <div class="footer-links">
+                <a href="index.html">Home</a>
+                <a href="about.html">About the Book</a>
+                <a href="author.html">Meet the Author</a>
+                <a href="gallery.html">Gallery</a>
+                <a href="contact.html">Contact</a>
+            </div>
+            <div class="footer-social">
+                <span>Share the journey:</span>
+                <div class="social-icons">
+                    <a href="https://instagram.com/officalthemanwithin" target="_blank"><i class="fab fa-instagram"></i> @officalthemanwithin</a>
+                    <a href="https://instagram.com/faisal_rasool_17" target="_blank"><i class="fab fa-instagram"></i> @faisal_rasool_17</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+            <p>&copy; 2026 Faisal Rasool. All Rights Reserved. Published by Writer's Pocket.</p>
+        </div>
+    </footer>
+
+    <!-- JS -->
+    <script src="script.js"></script>
+</body>
+</html>
