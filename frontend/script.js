@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://themanwithin.onrender.com";
+const API_BASE_URL = window.location.origin;
 
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', () => {
@@ -273,7 +273,8 @@ const CHAT_WS_URL = API_BASE_URL.replace(/^http/, 'ws') + "/ws/chat";
 
 // Auto-join if already logged in on community page
 document.addEventListener('DOMContentLoaded', () => {
-    if (window.location.pathname.includes('community.html')) {
+    // Check if we are on the community page by looking for the chat container
+    if (document.getElementById('community-chat-container')) {
         if (currentChatUser) {
             showChatInterface();
         }
