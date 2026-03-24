@@ -945,28 +945,31 @@ footer {
     z-index: 1;
 }
 
-/* COMMUNITY PAGE & CHAT OVERHAUL */
+/* COMMUNITY PAGE & CHAT OVERHAUL - FULL PAGE IMMERSIVE */
 .community-page {
-    overflow-y: auto !important;
-    height: auto !important;
+    overflow: hidden; /* Lock body scrolling, we use the chat container as the viewport */
+    height: 100vh;
 }
 
 .community-section {
-    padding: 2rem 0 8rem;
-    min-height: 80vh;
+    padding: 0;
+    height: calc(100vh - 80px); /* Adjust based on navbar height */
+    margin-top: 80px;
+    display: flex;
+    flex-direction: column;
 }
 
 .community-chat-container {
-    height: 650px; /* Base height */
-    max-height: 85vh;
+    flex: 1;
     display: flex;
     flex-direction: column;
     padding: 0;
     overflow: hidden;
     background: #0b141a; /* WhatsApp Dark BG */
-    border: 1px solid #202c33;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    border: none;
+    border-radius: 0;
+    width: 100%;
+    margin: 0;
 }
 
 /* Lobby / Join Screen */
@@ -1078,6 +1081,8 @@ footer {
 }
 
 .chat-main-header {
+    position: sticky;
+    top: 0;
     padding: 10px 16px;
     background: #202c33;
     border-bottom: 1px solid rgba(0,0,0,0.1);
@@ -1232,11 +1237,14 @@ footer {
 
 /* Chat Input Bar */
 .chat-footer-input {
+    position: sticky;
+    bottom: 0;
     padding: 10px 16px;
     background: #202c33;
     display: flex;
     align-items: center;
     gap: 8px;
+    z-index: 10;
 }
 
 .chat-footer-input .form-control {

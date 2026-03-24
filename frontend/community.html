@@ -42,76 +42,74 @@
     </header>
 
     <section class="community-section">
-        <div class="container">
-            <div id="community-chat-container" class="community-chat-container glass-panel reveal reveal-bottom">
-                
-                <!-- Lobby / Join Screen -->
-                <div id="chat-auth-screen" class="chat-lobby active">
-                    <div class="lobby-content">
-                        <div class="auth-card glass-panel">
-                            <div class="auth-header">
-                                <i class="fas fa-comments lobby-icon"></i>
-                                <h2>Community Hub</h2>
-                                <p>Join the conversation with "The Man Within" readers.</p>
-                            </div>
-
-                            <div class="auth-toggle">
-                                <button id="tab-guest" class="auth-tab active" onclick="switchAuthMode('guest')">Guest Reader</button>
-                                <button id="tab-admin" class="auth-tab" onclick="switchAuthMode('admin')">Author Access</button>
-                            </div>
-
-                            <div id="form-guest" class="auth-form active">
-                                <div class="input-group">
-                                    <i class="fas fa-user"></i>
-                                    <input type="text" id="chat-guest-name" class="form-control" placeholder="Your Display Name">
-                                </div>
-                                <button class="btn btn-secondary w-full" onclick="joinChat('guest')">Enter as Guest</button>
-                            </div>
-
-                            <div id="form-admin" class="auth-form">
-                                <div class="input-group">
-                                    <i class="fas fa-lock"></i>
-                                    <input type="password" id="chat-admin-pass" class="form-control" placeholder="Admin Password">
-                                </div>
-                                <button class="btn btn-primary w-full" onclick="joinChat('admin')">Verify Author Identity</button>
-                            </div>
-                            
-                            <p class="auth-footer">By joining, you agree to the community guidelines.</p>
+        <div id="community-chat-container" class="community-chat-container reveal reveal-bottom">
+            
+            <!-- Lobby / Join Screen -->
+            <div id="chat-auth-screen" class="chat-lobby active">
+                <div class="lobby-content">
+                    <div class="auth-card glass-panel">
+                        <div class="auth-header">
+                            <i class="fas fa-comments lobby-icon"></i>
+                            <h2>Community Hub</h2>
+                            <p>Join the conversation with "The Man Within" readers.</p>
                         </div>
+
+                        <div class="auth-toggle">
+                            <button id="tab-guest" class="auth-tab active" onclick="switchAuthMode('guest')">Guest Reader</button>
+                            <button id="tab-admin" class="auth-tab" onclick="switchAuthMode('admin')">Author Access</button>
+                        </div>
+
+                        <div id="form-guest" class="auth-form active">
+                            <div class="input-group">
+                                <i class="fas fa-user"></i>
+                                <input type="text" id="chat-guest-name" class="form-control" placeholder="Your Display Name">
+                            </div>
+                            <button class="btn btn-secondary w-full" onclick="joinChat('guest')">Enter as Guest</button>
+                        </div>
+
+                        <div id="form-admin" class="auth-form">
+                            <div class="input-group">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="chat-admin-pass" class="form-control" placeholder="Admin Password">
+                            </div>
+                            <button class="btn btn-primary w-full" onclick="joinChat('admin')">Verify Author Identity</button>
+                        </div>
+                        
+                        <p class="auth-footer">By joining, you agree to the community guidelines.</p>
                     </div>
                 </div>
-
-                <!-- Live Chat Screen -->
-                <div id="chat-interface-screen" class="chat-full-interface" style="display: none;">
-                    <div class="chat-main-header">
-                        <div class="chat-user-info">
-                            <div class="chat-avatar">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <div class="chat-user-details">
-                                <h3>The Man Within Community</h3>
-                                <span id="active-user-display">Connecting...</span>
-                            </div>
-                        </div>
-                        <div class="chat-header-actions">
-                            <span class="status-dot"></span>
-                            <i class="fas fa-ellipsis-v" style="color: #8696a0; cursor: pointer; margin-left: 15px;"></i>
-                        </div>
-                    </div>
-                    
-                    <div id="chat-messages" class="chat-messages-area">
-                        <!-- Messages injected by JS -->
-                    </div>
-
-                    <div class="chat-footer-input">
-                        <input type="text" id="chat-input" class="form-control" placeholder="Type your message here..." onkeypress="handleChatKeyPress(event)">
-                        <button class="btn btn-primary send-btn" onclick="sendChatMessage()">
-                            <i class="fas fa-paper-plane"></i> <span>Send</span>
-                        </button>
-                    </div>
-                </div>
-
             </div>
+
+            <!-- Live Chat Screen -->
+            <div id="chat-interface-screen" class="chat-full-interface" style="display: none;">
+                <div class="chat-main-header">
+                    <div class="chat-user-info">
+                        <div class="chat-avatar">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="chat-user-details">
+                            <h3>The Man Within Community</h3>
+                            <span id="active-user-display">Connecting...</span>
+                        </div>
+                    </div>
+                    <div class="chat-header-actions">
+                        <span class="status-dot"></span>
+                        <i class="fas fa-ellipsis-v" style="color: #8696a0; cursor: pointer; margin-left: 15px;"></i>
+                    </div>
+                </div>
+                
+                <div id="chat-messages" class="chat-messages-area">
+                    <!-- Messages injected by JS -->
+                </div>
+
+                <div class="chat-footer-input">
+                    <input type="text" id="chat-input" class="form-control" placeholder="Type your message here..." onkeypress="handleChatKeyPress(event)">
+                    <button class="btn btn-primary send-btn" onclick="sendChatMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+
         </div>
     </section>
 
