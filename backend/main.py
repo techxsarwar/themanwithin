@@ -314,3 +314,18 @@ async def create_review(review: ReviewCreate, db=Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/reviews/{id}")
+async def delete_review(id: int, db=Depends(get_db), username: str = Depends(get_current_username)):
+    try:
+        db_review = db.query(Review).filter(Review.id == id).first()
+        if not db_review:
+            raise HTTPException(status_code=404, detail="Review not found")
+        db.delete(db_review)
+        db.commit()
+        return {"status": "success"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
