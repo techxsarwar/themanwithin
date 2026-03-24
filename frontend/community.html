@@ -48,24 +48,35 @@
                 <!-- Lobby / Join Screen -->
                 <div id="chat-auth-screen" class="chat-lobby active">
                     <div class="lobby-content">
-                        <i class="fas fa-comments lobby-icon"></i>
-                        <h2>Join the Conversation</h2>
-                        <p>Share your thoughts, ask questions, and connect with other readers of "The Man Within".</p>
-                        
-                        <div class="join-options">
-                            <div class="option-card">
-                                <h3>Reader Guest</h3>
-                                <input type="text" id="chat-guest-name" class="form-control" placeholder="Enter your name">
-                                <button class="btn btn-secondary" onclick="joinChat('guest')">Enter Community</button>
+                        <div class="auth-card glass-panel">
+                            <div class="auth-header">
+                                <i class="fas fa-comments lobby-icon"></i>
+                                <h2>Community Hub</h2>
+                                <p>Join the conversation with "The Man Within" readers.</p>
+                            </div>
+
+                            <div class="auth-toggle">
+                                <button id="tab-guest" class="auth-tab active" onclick="switchAuthMode('guest')">Guest Reader</button>
+                                <button id="tab-admin" class="auth-tab" onclick="switchAuthMode('admin')">Author Access</button>
+                            </div>
+
+                            <div id="form-guest" class="auth-form active">
+                                <div class="input-group">
+                                    <i class="fas fa-user"></i>
+                                    <input type="text" id="chat-guest-name" class="form-control" placeholder="Your Display Name">
+                                </div>
+                                <button class="btn btn-secondary w-full" onclick="joinChat('guest')">Enter as Guest</button>
+                            </div>
+
+                            <div id="form-admin" class="auth-form">
+                                <div class="input-group">
+                                    <i class="fas fa-lock"></i>
+                                    <input type="password" id="chat-admin-pass" class="form-control" placeholder="Admin Password">
+                                </div>
+                                <button class="btn btn-primary w-full" onclick="joinChat('admin')">Verify Author Identity</button>
                             </div>
                             
-                            <div class="divider-vertical">OR</div>
-                            
-                            <div class="option-card">
-                                <h3>Author Login</h3>
-                                <input type="password" id="chat-admin-pass" class="form-control" placeholder="Admin Password">
-                                <button class="btn btn-primary" onclick="joinChat('admin')">Verify Identity</button>
-                            </div>
+                            <p class="auth-footer">By joining, you agree to the community guidelines.</p>
                         </div>
                     </div>
                 </div>

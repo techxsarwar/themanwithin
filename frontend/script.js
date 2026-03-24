@@ -288,6 +288,25 @@ window.closeAnnouncementModal = function() {
 
 
 
+function switchAuthMode(mode) {
+    const tabGuest = document.getElementById('tab-guest');
+    const tabAdmin = document.getElementById('tab-admin');
+    const formGuest = document.getElementById('form-guest');
+    const formAdmin = document.getElementById('form-admin');
+
+    if (mode === 'guest') {
+        tabGuest.classList.add('active');
+        tabAdmin.classList.remove('active');
+        formGuest.classList.add('active');
+        formAdmin.classList.remove('active');
+    } else {
+        tabAdmin.classList.add('active');
+        tabGuest.classList.remove('active');
+        formAdmin.classList.add('active');
+        formGuest.classList.remove('active');
+    }
+}
+
 function showChatInterface() {
     const authScreen = document.getElementById('chat-auth-screen');
     const chatScreen = document.getElementById('chat-interface-screen');
