@@ -50,6 +50,6 @@ for file in html_files:
         content = f.read()
     
     if 'id="chat-widget-btn"' not in content:
-        content = content.replace('<!-- JS -->', widget_html + '    <!-- JS -->')
+        content = content.replace('</body>', widget_html + '</body>')
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(content)
