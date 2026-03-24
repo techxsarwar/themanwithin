@@ -41,6 +41,7 @@
             position: fixed;
             height: 100vh;
             z-index: 100;
+            overflow-y: auto;
         }
 
         .sidebar-header {
@@ -212,7 +213,7 @@
             padding-bottom: 1rem;
         }
 
-        .announcement-item, .seo-item {
+        .announcement-item, .seo-item, .review-item {
             padding: 1rem;
             border-bottom: 1px solid var(--border-color);
             display: flex;
@@ -220,7 +221,7 @@
             align-items: flex-start;
         }
 
-        .announcement-item:last-child, .seo-item:last-child {
+        .announcement-item:last-child, .seo-item:last-child, .review-item:last-child {
             border-bottom: none;
         }
 
@@ -275,6 +276,8 @@
             <div class="nav-item" onclick="switchTab('messages')"><i class="fas fa-envelope"></i> Messages</div>
             <div class="nav-item" onclick="switchTab('announcements')"><i class="fas fa-bullhorn"></i> Announcements</div>
             <div class="nav-item" onclick="switchTab('seo')"><i class="fas fa-search"></i> SEO Settings</div>
+            <div class="nav-item" onclick="switchTab('social')"><i class="fas fa-link"></i> Social Links</div>
+            <div class="nav-item" onclick="switchTab('reviews')"><i class="fas fa-star"></i> Reviews</div>
         </div>
         <div class="sidebar-footer">
             <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Secure Logout</button>
@@ -297,6 +300,10 @@
                 <div class="stat-card">
                     <div style="color: var(--text-muted);">Active Announcements</div>
                     <div class="stat-value" id="stat-announcements">0</div>
+                </div>
+                <div class="stat-card">
+                    <div style="color: var(--text-muted);">Total Site Visits</div>
+                    <div class="stat-value" id="stat-visits">0</div>
                 </div>
             </div>
             
@@ -394,6 +401,64 @@
             </div>
         </div>
 
+        <!-- Social Links Tab -->
+        <div id="tab-social" class="tab-content">
+            <h1 class="page-title">Media & Social Manager</h1>
+            <p class="page-subtitle">Update your global integrations and outbound links.</p>
+            
+            <div class="card">
+                <form onsubmit="handleSocialSubmit(event)">
+                    <div class="form-group">
+                        <label class="form-label"><i class="fab fa-youtube" style="color:#ff0000;"></i> YouTube Trailer URL</label>
+                        <input type="url" id="social-youtube" class="form-control" placeholder="https://youtube.com/watch?v=...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fab fa-instagram" style="color:#e1306c;"></i> Instagram Profile URL</label>
+                        <input type="url" id="social-instagram" class="form-control" placeholder="https://instagram.com/yourprofile">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fab fa-github" style="color:#ffffff;"></i> GitHub Repository / Profile</label>
+                        <input type="url" id="social-github" class="form-control" placeholder="https://github.com/yourrepo">
+                    </div>
+                    <button type="submit" class="btn-primary">Save Social Links</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Reviews Tab -->
+        <div id="tab-reviews" class="tab-content">
+            <h1 class="page-title">Testimonials & Reviews</h1>
+            <p class="page-subtitle">View reader feedback and post new testimonials.</p>
+            
+            <div class="card">
+                <h3 style="margin-top: 0;">Add Reader Review</h3>
+                <form onsubmit="handleReviewSubmit(event)">
+                    <div class="form-group">
+                        <label class="form-label">Reviewer Name</label>
+                        <input type="text" id="review-name" class="form-control" required placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Rating (1-5 Stars)</label>
+                        <input type="number" id="review-rating" class="form-control" required min="1" max="5" value="5">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Review Text</label>
+                        <textarea id="review-text" class="form-control" required placeholder="This book changed my view on..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">Post Review</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="list-header">
+                    <h3 style="margin: 0;">Published Reviews</h3>
+                </div>
+                <div id="reviews-list">
+                    <div style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading reviews...</div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -429,6 +494,9 @@
             if(tabId === 'messages') loadMessages();
             if(tabId === 'announcements') loadAnnouncements();
             if(tabId === 'dashboard') loadDashboardStats();
+            if(tabId === 'seo') loadSeoForPage();
+            if(tabId === 'social') loadSocialSettings();
+            if(tabId === 'reviews') loadReviews();
         }
 
         function previewImage(inputId, previewId) {
@@ -458,8 +526,6 @@
             if (body) options.body = JSON.stringify(body);
 
             try {
-                // If endpoint starts with /api (local dev proxy), or use global URL
-                // The explicit requirement says API_BASE_URL = "https://themanwithin.onrender.com"
                 const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
                 
                 if (response.status === 401) {
@@ -476,7 +542,7 @@
             }
         }
 
-        // --- Dashboard ---
+        // --- Dashboard / Analytics ---
         async function loadDashboardStats() {
             try {
                 const messages = await apiCall('/api/admin/messages');
@@ -484,6 +550,9 @@
                 
                 const announcements = await apiCall('/api/admin/announcements');
                 document.getElementById('stat-announcements').innerText = announcements.length;
+
+                const analytics = await apiCall('/api/analytics');
+                document.getElementById('stat-visits').innerText = analytics.visit_count || 0;
             } catch(e) {
                 console.error("Dashboard load error", e);
             }
@@ -581,7 +650,7 @@
                 document.getElementById('announcement-submit-btn').innerText = "Update Announcement";
                 document.getElementById('announcement-cancel-btn').style.display = "block";
                 previewImage('announcement-image', 'announcement-preview');
-                window.scrollTo(0, 0); // Scroll to top for editing
+                window.scrollTo(0, 0); 
             }
         }
 
@@ -606,7 +675,7 @@
             }
         }
 
-        // --- SEO ---
+        // --- SEO Settings ---
         let allSeoSettings = [];
 
         async function loadSeoForPage() {
@@ -647,6 +716,81 @@
                 alert("SEO Settings updated successfully!");
             } catch(e) {
                 alert("Failed to update SEO settings");
+            }
+        }
+
+        // --- Social Links ---
+        async function loadSocialSettings() {
+            try {
+                const settings = await apiCall('/api/site-settings');
+                if(settings) {
+                    document.getElementById('social-youtube').value = settings.youtube_url || '';
+                    document.getElementById('social-instagram').value = settings.instagram_url || '';
+                    document.getElementById('social-github').value = settings.github_url || '';
+                }
+            } catch(e) {
+                console.error("Failed to load social settings", e);
+            }
+        }
+
+        async function handleSocialSubmit(e) {
+            e.preventDefault();
+            const payload = {
+                youtube_url: document.getElementById('social-youtube').value,
+                instagram_url: document.getElementById('social-instagram').value,
+                github_url: document.getElementById('social-github').value
+            };
+            try {
+                await apiCall('/api/site-settings', 'PUT', payload);
+                alert("Social Links saved successfully!");
+            } catch(e) {
+                alert("Failed to save social links");
+            }
+        }
+
+        // --- Reviews / Testimonials ---
+        async function loadReviews() {
+            const container = document.getElementById('reviews-list');
+            try {
+                const reviews = await apiCall('/api/reviews');
+                if (reviews.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--text-muted);">No reviews posted.</div>';
+                    return;
+                }
+                
+                container.innerHTML = reviews.map(rev => {
+                    const stars = '★'.repeat(rev.rating) + '☆'.repeat(5 - rev.rating);
+                    return `
+                    <div class="review-item" style="flex-direction: column;">
+                        <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:0.5rem;">
+                            <strong style="color:var(--highlight);">${escapeHTML(rev.name)}</strong>
+                            <span style="color: #fbbf24;">${stars}</span>
+                        </div>
+                        <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">${new Date(rev.created_at).toLocaleString()}</div>
+                        <p style="margin:0; font-size:0.95rem;">"${escapeHTML(rev.text)}"</p>
+                    </div>
+                `}).join('');
+            } catch(e) {
+                container.innerHTML = '<div style="color:#ef4444; padding:1rem;">Failed to load reviews.</div>';
+            }
+        }
+
+        async function handleReviewSubmit(e) {
+            e.preventDefault();
+            const payload = {
+                name: document.getElementById('review-name').value,
+                rating: parseInt(document.getElementById('review-rating').value),
+                text: document.getElementById('review-text').value
+            };
+
+            try {
+                await apiCall('/api/reviews', 'POST', payload);
+                document.getElementById('review-name').value = '';
+                document.getElementById('review-rating').value = '5';
+                document.getElementById('review-text').value = '';
+                loadReviews();
+            } catch(e) {
+                alert("Failed to post review");
             }
         }
 

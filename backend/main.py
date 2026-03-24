@@ -1,22 +1,28 @@
 import os
 import sqlite3
 import secrets
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import datetime
 from fastapi import FastAPI, Request, Depends, HTTPException, status
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
-from sqlalchemy.orm import sessionmaker, declarative_base
+
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from models import (
+    get_db, Announcement, SEOSetting, Analytics, SiteSetting, Review,
+    AnnouncementCreate, AnnouncementUpdate, SEOSettingUpdate,
+    SiteSettingUpdate, ReviewCreate
+)
 
 app = FastAPI(title="The Man Within - Backend", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*", "https://themanwithin.netlify.app", "http://localhost:3000"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -27,54 +33,8 @@ ROOT_DIR = os.path.dirname(BASE_DIR)
 FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
 DB_PATH = os.path.join(BASE_DIR, "contact.db")
 
-# PostgreSQL / Supabase DB Setup
-DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DB_PATH}")
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+# DB Configuration and Models are now efficiently refactored into models.py
 
-connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
-class Announcement(Base):
-    __tablename__ = "announcements"
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, index=True)
-    content = Column(Text)
-    image_url = Column(String)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-
-class SEOSetting(Base):
-    __tablename__ = "seo_settings"
-    id = Column(Integer, primary_key=True, index=True)
-    page_name = Column(String, unique=True, index=True)
-    title = Column(String)
-    description = Column(Text)
-
-Base.metadata.create_all(bind=engine)
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-# Pydantic Schemas for new models
-class AnnouncementCreate(BaseModel):
-    title: str
-    content: str
-    image_url: str = ""
-
-class AnnouncementUpdate(BaseModel):
-    title: Optional[str] = None
-    content: Optional[str] = None
-    image_url: Optional[str] = None
-
-class SEOSettingUpdate(BaseModel):
-    title: str
-    description: str
 
 # Initialize SQLite DB
 def init_db():
@@ -195,54 +155,162 @@ async def get_admin_messages(username: str = Depends(get_current_username)):
 # Announcement Endpoints
 @app.get("/api/admin/announcements")
 async def get_announcements(db=Depends(get_db)):
-    return db.query(Announcement).order_by(Announcement.created_at.desc()).all()
+    try:
+        return db.query(Announcement).order_by(Announcement.created_at.desc()).all()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/admin/announcements")
 async def create_announcement(announcement: AnnouncementCreate, db=Depends(get_db), username: str = Depends(get_current_username)):
-    db_announcement = Announcement(**announcement.model_dump())
-    db.add(db_announcement)
-    db.commit()
-    db.refresh(db_announcement)
-    return db_announcement
+    try:
+        db_announcement = Announcement(**announcement.model_dump())
+        db.add(db_announcement)
+        db.commit()
+        db.refresh(db_announcement)
+        return db_announcement
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.put("/api/admin/announcements/{id}")
 async def update_announcement(id: int, announcement: AnnouncementUpdate, db=Depends(get_db), username: str = Depends(get_current_username)):
-    db_announcement = db.query(Announcement).filter(Announcement.id == id).first()
-    if not db_announcement:
-        raise HTTPException(status_code=404, detail="Announcement not found")
-    
-    update_data = announcement.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        if value is not None:
-            setattr(db_announcement, key, value)
-            
-    db.commit()
-    db.refresh(db_announcement)
-    return db_announcement
+    try:
+        db_announcement = db.query(Announcement).filter(Announcement.id == id).first()
+        if not db_announcement:
+            raise HTTPException(status_code=404, detail="Announcement not found")
+        
+        update_data = announcement.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            if value is not None:
+                setattr(db_announcement, key, value)
+                
+        db.commit()
+        db.refresh(db_announcement)
+        return db_announcement
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/admin/announcements/{id}")
 async def delete_announcement(id: int, db=Depends(get_db), username: str = Depends(get_current_username)):
-    db_announcement = db.query(Announcement).filter(Announcement.id == id).first()
-    if not db_announcement:
-        raise HTTPException(status_code=404, detail="Announcement not found")
-    db.delete(db_announcement)
-    db.commit()
-    return {"status": "success"}
+    try:
+        db_announcement = db.query(Announcement).filter(Announcement.id == id).first()
+        if not db_announcement:
+            raise HTTPException(status_code=404, detail="Announcement not found")
+        db.delete(db_announcement)
+        db.commit()
+        return {"status": "success"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 # SEO Endpoints
 @app.get("/api/admin/seo")
 async def get_seo_settings(db=Depends(get_db)):
-    return db.query(SEOSetting).all()
+    try:
+        return db.query(SEOSetting).all()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.put("/api/admin/seo/{page_name}")
 async def update_seo_setting(page_name: str, seo: SEOSettingUpdate, db=Depends(get_db), username: str = Depends(get_current_username)):
-    db_seo = db.query(SEOSetting).filter(SEOSetting.page_name == page_name).first()
-    if not db_seo:
-        db_seo = SEOSetting(page_name=page_name, title=seo.title, description=seo.description)
-        db.add(db_seo)
-    else:
-        db_seo.title = seo.title
-        db_seo.description = seo.description
-    db.commit()
-    db.refresh(db_seo)
-    return db_seo
+    try:
+        db_seo = db.query(SEOSetting).filter(SEOSetting.page_name == page_name).first()
+        if not db_seo:
+            db_seo = SEOSetting(page_name=page_name, title=seo.title, description=seo.description)
+            db.add(db_seo)
+        else:
+            db_seo.title = seo.title
+            db_seo.description = seo.description
+        db.commit()
+        db.refresh(db_seo)
+        return db_seo
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Analytics Endpoints
+@app.get("/api/analytics")
+async def get_analytics(db=Depends(get_db)):
+    try:
+        stat = db.query(Analytics).first()
+        if not stat:
+            stat = Analytics(visit_count=0)
+            db.add(stat)
+            db.commit()
+            db.refresh(stat)
+        return {"visit_count": stat.visit_count}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/analytics/hit")
+async def register_hit(db=Depends(get_db)):
+    try:
+        stat = db.query(Analytics).first()
+        if not stat:
+            stat = Analytics(visit_count=1)
+            db.add(stat)
+        else:
+            stat.visit_count += 1
+        db.commit()
+        return {"status": "success", "visit_count": stat.visit_count}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Media & Social Settings Endpoints
+@app.get("/api/site-settings")
+async def get_site_settings(db=Depends(get_db)):
+    try:
+        settings = db.query(SiteSetting).first()
+        if not settings:
+            settings = SiteSetting()
+            db.add(settings)
+            db.commit()
+            db.refresh(settings)
+        return settings
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/site-settings")
+async def update_site_settings(settings_update: SiteSettingUpdate, db=Depends(get_db), username: str = Depends(get_current_username)):
+    try:
+        settings = db.query(SiteSetting).first()
+        if not settings:
+            settings = SiteSetting(**settings_update.model_dump(exclude_unset=True))
+            db.add(settings)
+        else:
+            update_data = settings_update.model_dump(exclude_unset=True)
+            for key, value in update_data.items():
+                if value is not None:
+                    setattr(settings, key, value)
+        db.commit()
+        db.refresh(settings)
+        return settings
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Testimonials/Reviews Endpoints
+@app.get("/api/reviews")
+async def get_reviews(db=Depends(get_db)):
+    try:
+        return db.query(Review).order_by(Review.created_at.desc()).all()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/reviews")
+async def create_review(review: ReviewCreate, db=Depends(get_db)):
+    try:
+        db_review = Review(**review.model_dump())
+        db.add(db_review)
+        db.commit()
+        db.refresh(db_review)
+        return db_review
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
