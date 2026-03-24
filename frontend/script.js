@@ -275,7 +275,11 @@ window.closeAnnouncementModal = function() {
 let chatWs = null;
 let currentChatUser = localStorage.getItem('chatUser');
 let currentChatIsAdmin = localStorage.getItem('chatIsAdmin') === 'true';
-const CHAT_WS_URL = API_BASE_URL.replace(/^http/, 'ws') + "/ws/chat";
+
+// Explicitly build WebSocket URL based on current host
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const CHAT_WS_URL = `${wsProtocol}//${window.location.host}/ws/chat`;
+let heartbeatInterval = null;
 
 // Auto-join if already logged in on community page
 document.addEventListener('DOMContentLoaded', () => {
@@ -351,11 +355,20 @@ function connectWebSocket() {
             type: "join",
             sender: currentChatUser
         }));
+        
+        // Start heartbeat to keep Render connection alive
+        if (heartbeatInterval) clearInterval(heartbeatInterval);
+        heartbeatInterval = setInterval(() => {
+            if (chatWs && chatWs.readyState === WebSocket.OPEN) {
+                chatWs.send(JSON.stringify({ type: "ping" }));
+            }
+        }, 30000);
     };
 
     chatWs.onmessage = (event) => {
         try {
             const msg = JSON.parse(event.data);
+            if (msg.type === "pong") return; // Ignore heartbeat response
             console.log("Received message:", msg);
             appendMessageToChat(msg);
             scrollToChatBottom();
@@ -365,12 +378,13 @@ function connectWebSocket() {
     };
 
     chatWs.onerror = (error) => {
-        console.error("WebSocket Error:", error);
+        console.error("WebSocket Error Details:", error);
     };
 
     chatWs.onclose = (event) => {
         console.warn("WebSocket connection closed:", event.code, event.reason);
-        setTimeout(connectWebSocket, 3000);
+        if (heartbeatInterval) clearInterval(heartbeatInterval);
+        setTimeout(connectWebSocket, 5000);
     };
 }
 

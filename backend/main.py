@@ -357,6 +357,7 @@ async def get_chat_history(db=Depends(get_db)):
 
 @app.websocket("/ws/chat")
 async def websocket_chat_endpoint(websocket: WebSocket):
+    print(f"New chat connection attempt: {websocket.client}")
     await manager.connect(websocket)
     try:
         while True:
@@ -364,6 +365,11 @@ async def websocket_chat_endpoint(websocket: WebSocket):
             try:
                 msg_data = json.loads(data)
                 
+                # Handle Heartbeat
+                if msg_data.get("type") == "ping":
+                    await websocket.send_json({"type": "pong"})
+                    continue
+
                 # If a join event, system announces
                 if msg_data.get("type") == "join":
                     sender_name = msg_data.get("sender", "a new reader")
