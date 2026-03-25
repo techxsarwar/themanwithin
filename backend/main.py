@@ -426,6 +426,29 @@ async def set_chat_timer(timer_data: ChatTimerSet, username: str = Depends(get_c
         await manager.broadcast({"type": "freeze", "duration": 0})
     return {"status": "success"}
 
+@app.get("/api/admin/chat/banned")
+async def get_banned_users(db=Depends(get_db), username: str = Depends(get_current_username)):
+    try:
+        banned = db.query(BannedUser).order_by(BannedUser.banned_at.desc()).all()
+        return {"banned": [{"id": bu.id, "username": bu.username, "banned_at": bu.banned_at.isoformat() if bu.banned_at else None} for bu in banned]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/admin/chat/ban/{ban_username}")
+async def unban_chat_user(ban_username: str, db=Depends(get_db), username: str = Depends(get_current_username)):
+    try:
+        existing = db.query(BannedUser).filter(BannedUser.username == ban_username).first()
+        if not existing:
+            raise HTTPException(status_code=404, detail="User not found in ban list")
+        db.delete(existing)
+        db.commit()
+        return {"status": "success", "message": f"{ban_username} unbanned."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.websocket("/ws/chat")
 async def websocket_chat_endpoint(websocket: WebSocket):
     print(f"New chat connection attempt: {websocket.client}")
