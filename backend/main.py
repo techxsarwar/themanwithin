@@ -15,8 +15,10 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from models import (
     get_db, SessionLocal, Announcement, SEOSetting, Analytics, SiteSetting, Review, Message, ChatMessage,
     BannedUser, AnnouncementCreate, AnnouncementUpdate, SEOSettingUpdate,
-    SiteSettingUpdate, ReviewCreate, BannedUserCreate, ChatTimerSet
+    SiteSettingUpdate, ReviewCreate, BannedUserCreate, ChatTimerSet,
+    AdminCredentials, AdminCredentialsUpdate
 )
+import hashlib
 
 app = FastAPI(title="The Man Within - Backend", version="1.0.0")
 
@@ -45,9 +47,23 @@ FRONTEND_DIR = os.path.join(ROOT_DIR, "frontend")
 
 security = HTTPBasic()
 
-def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
-    correct_username = secrets.compare_digest(credentials.username, "faisal")
-    correct_password = secrets.compare_digest(credentials.password, "admin")
+def hash_password(password: str) -> str:
+    return hashlib.sha256((password + "admin_salt_tmw").encode('utf-8')).hexdigest()
+
+def get_current_username(credentials: HTTPBasicCredentials = Depends(security), db = Depends(get_db)):
+    admin_cred = db.query(AdminCredentials).first()
+    
+    if admin_cred:
+        expected_username = admin_cred.username
+        expected_password_hash = admin_cred.password_hash
+        current_password_hash = hash_password(credentials.password)
+        correct_username = secrets.compare_digest(credentials.username, expected_username)
+        correct_password = secrets.compare_digest(current_password_hash, expected_password_hash)
+    else:
+        # Fallback to default if no custom credentials set
+        correct_username = secrets.compare_digest(credentials.username, "faisal")
+        correct_password = secrets.compare_digest(credentials.password, "admin")
+
     if not (correct_username and correct_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -55,6 +71,39 @@ def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
             headers={"WWW-Authenticate": "Basic"},
         )
     return credentials.username
+
+@app.put("/api/admin/credentials")
+async def update_admin_credentials(creds: AdminCredentialsUpdate, db=Depends(get_db)):
+    admin_cred = db.query(AdminCredentials).first()
+    
+    if admin_cred:
+        expected_username = admin_cred.username
+        expected_password_hash = admin_cred.password_hash
+    else:
+        expected_username = "faisal"
+        expected_password_hash = hash_password("admin")
+        
+    current_old_hash = hash_password(creds.old_password)
+    correct_username = secrets.compare_digest(creds.old_username, expected_username)
+    
+    if admin_cred:
+        correct_password = secrets.compare_digest(current_old_hash, expected_password_hash)
+    else:
+        correct_password = secrets.compare_digest(creds.old_password, "admin")
+    
+    if not (correct_username and correct_password):
+        raise HTTPException(status_code=401, detail="Invalid old credentials")
+        
+    new_hash = hash_password(creds.new_password)
+    if admin_cred:
+        admin_cred.username = creds.new_username
+        admin_cred.password_hash = new_hash
+    else:
+        new_cred = AdminCredentials(username=creds.new_username, password_hash=new_hash)
+        db.add(new_cred)
+    
+    db.commit()
+    return {"status": "success", "message": "Credentials updated successfully"}
 
 # Mount assets directory for static files (images, etc)
 assets_dir = os.path.join(FRONTEND_DIR, "assets")

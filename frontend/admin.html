@@ -280,6 +280,7 @@
             <div class="nav-item" onclick="switchTab('social')"><i class="fas fa-link"></i> Social Links</div>
             <div class="nav-item" onclick="switchTab('reviews')"><i class="fas fa-star"></i> Reviews</div>
             <div class="nav-item" onclick="switchTab('chatmod')"><i class="fas fa-shield-alt"></i> Chat Mod</div>
+            <div class="nav-item" onclick="switchTab('security')"><i class="fas fa-lock"></i> Security</div>
         </div>
         <div class="sidebar-footer">
             <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Secure Logout</button>
@@ -512,6 +513,60 @@
             </div>
         </div>
 
+        <!-- Security Tab -->
+        <div id="tab-security" class="tab-content">
+            <h1 class="page-title">Admin Credentials</h1>
+            <p class="page-subtitle">Securely change your admin username and password.</p>
+            
+            <div class="card" style="max-width: 600px;">
+                <form id="security-form" onsubmit="handleSecuritySubmit(event)">
+                    <h3 style="margin-top:0;">Update Credentials</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Current Admin ID</label>
+                        <input type="text" id="sec-old-id" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Current Password</label>
+                        <input type="password" id="sec-old-pass" class="form-control" required>
+                    </div>
+                    
+                    <hr style="border:0; border-top:1px solid var(--border-color); margin:1.5rem 0;">
+                    
+                    <div class="form-group">
+                        <label class="form-label">New Admin ID</label>
+                        <input type="text" id="sec-new-id" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">New Password</label>
+                        <input type="password" id="sec-new-pass" class="form-control" required>
+                    </div>
+                    
+                    <hr style="border:0; border-top:1px solid var(--border-color); margin:1.5rem 0;">
+                    
+                    <h3 style="margin-top:0;">Security Verification</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1rem;">Please solve the following captchas to proceed.</p>
+                    
+                    <div class="form-group">
+                        <label class="form-label" id="captcha-1-label">Captcha 1</label>
+                        <input type="number" id="captcha-1-input" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" id="captcha-2-label">Captcha 2</label>
+                        <input type="number" id="captcha-2-input" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" id="captcha-3-label">Captcha 3</label>
+                        <input type="number" id="captcha-3-input" class="form-control" required>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; align-items: center; justify-content: space-between;">
+                        <button type="submit" class="btn-primary">Verify and Update</button>
+                        <button type="button" class="btn-primary" style="background:transparent; border:1px solid var(--border-color); color:var(--text-main);" onclick="generateCaptchas()">Refresh Captchas</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -554,6 +609,7 @@
                 loadActiveChatUsers();
                 loadBannedUsers();
             }
+            if(tabId === 'security') generateCaptchas();
         }
 
         function previewImage(inputId, previewId) {
@@ -565,6 +621,74 @@
                 preview.onerror = () => { preview.style.display = 'none'; };
             } else {
                 preview.style.display = 'none';
+            }
+        }
+
+        
+        let captchaAnswers = [0, 0, 0];
+
+        function generateCaptchas() {
+            document.getElementById('sec-old-id').value = '';
+            document.getElementById('sec-old-pass').value = '';
+            document.getElementById('sec-new-id').value = '';
+            document.getElementById('sec-new-pass').value = '';
+            
+            for (let i = 1; i <= 3; i++) {
+                const a = Math.floor(Math.random() * 10) + 1;
+                const b = Math.floor(Math.random() * 10) + 1;
+                const ops = ['+', '*', '-'];
+                const op = ops[Math.floor(Math.random() * ops.length)];
+                
+                document.getElementById(`captcha-${i}-label`).innerText = `Solve: ${a} ${op} ${b}`;
+                document.getElementById(`captcha-${i}-input`).value = '';
+                
+                if (op === '+') captchaAnswers[i-1] = a + b;
+                else if (op === '*') captchaAnswers[i-1] = a * b;
+                else if (op === '-') captchaAnswers[i-1] = a - b;
+            }
+        }
+
+        async function handleSecuritySubmit(e) {
+            e.preventDefault();
+            
+            // Validate Captchas
+            for(let i = 1; i <= 3; i++) {
+                const val = parseInt(document.getElementById(`captcha-${i}-input`).value);
+                if (val !== captchaAnswers[i-1]) {
+                    alert(`Captcha ${i} is incorrect. Please try again.`);
+                    generateCaptchas();
+                    return;
+                }
+            }
+            
+            const payload = {
+                old_username: document.getElementById('sec-old-id').value,
+                old_password: document.getElementById('sec-old-pass').value,
+                new_username: document.getElementById('sec-new-id').value,
+                new_password: document.getElementById('sec-new-pass').value
+            };
+            
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/admin/credentials`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Basic ${adminToken}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await res.json();
+                if(!res.ok) {
+                    throw new Error(data.detail || 'Failed to update credentials');
+                }
+                
+                alert("Credentials changed successfully! Please log in again.");
+                localStorage.removeItem('admin_token');
+                window.location.href = '/login';
+            } catch(error) {
+                alert("Error: " + error.message);
+                generateCaptchas();
             }
         }
 

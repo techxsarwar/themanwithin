@@ -77,6 +77,12 @@ class BannedUser(Base):
     username = Column(String, unique=True, index=True)
     banned_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+class AdminCredentials(Base):
+    __tablename__ = "admin_credentials"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True)
+    password_hash = Column(String)
+
 Base.metadata.create_all(bind=engine)
 
 def get_db():
@@ -117,3 +123,9 @@ class BannedUserCreate(BaseModel):
 
 class ChatTimerSet(BaseModel):
     duration_seconds: int
+
+class AdminCredentialsUpdate(BaseModel):
+    old_username: str
+    old_password: str
+    new_username: str
+    new_password: str
