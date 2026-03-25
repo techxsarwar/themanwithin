@@ -392,6 +392,45 @@ function connectWebSocket() {
                 if (el) el.remove();
                 return;
             }
+            
+            // Handle ban
+            if (msg.type === "banned") {
+                alert(msg.text);
+                localStorage.removeItem('chatUser');
+                window.location.reload();
+                return;
+            }
+            
+            // Handle freeze
+            if (msg.type === "freeze") {
+                const input = document.getElementById('chat-input');
+                const btn = document.querySelector('.send-btn');
+                if (msg.duration > 0) {
+                    input.disabled = true;
+                    btn.disabled = true;
+                    input.placeholder = `Chat is paused for ${msg.duration}s...`;
+                    let remaining = msg.duration;
+                    
+                    if (window.chatFreezeInterval) clearInterval(window.chatFreezeInterval);
+                    window.chatFreezeInterval = setInterval(() => {
+                        remaining--;
+                        if(remaining <= 0) {
+                            clearInterval(window.chatFreezeInterval);
+                            input.disabled = false;
+                            btn.disabled = false;
+                            input.placeholder = "Type a message...";
+                        } else {
+                            input.placeholder = `Chat is paused for ${remaining}s...`;
+                        }
+                    }, 1000);
+                } else {
+                    if (window.chatFreezeInterval) clearInterval(window.chatFreezeInterval);
+                    input.disabled = false;
+                    btn.disabled = false;
+                    input.placeholder = "Type a message...";
+                }
+                return;
+            }
 
             console.log("Received message:", msg);
             appendMessageToChat(msg);

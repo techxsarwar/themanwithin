@@ -279,6 +279,7 @@
             <div class="nav-item" onclick="switchTab('seo')"><i class="fas fa-search"></i> SEO Settings</div>
             <div class="nav-item" onclick="switchTab('social')"><i class="fas fa-link"></i> Social Links</div>
             <div class="nav-item" onclick="switchTab('reviews')"><i class="fas fa-star"></i> Reviews</div>
+            <div class="nav-item" onclick="switchTab('chatmod')"><i class="fas fa-shield-alt"></i> Chat Mod</div>
         </div>
         <div class="sidebar-footer">
             <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Secure Logout</button>
@@ -460,6 +461,47 @@
             </div>
         </div>
 
+        <!-- Chat Mod Tab -->
+        <div id="tab-chatmod" class="tab-content">
+            <h1 class="page-title">Community Chat Moderation</h1>
+            <p class="page-subtitle">Manage active users, bans, and chat timers.</p>
+            
+            <div class="stats-grid" style="grid-template-columns: 1fr 1fr;">
+                 <div class="card" style="margin-bottom:0;">
+                    <h3 style="margin-top: 0;">Set Chat Timer</h3>
+                    <form onsubmit="handleChatTimerSubmit(event)">
+                        <div class="form-group">
+                            <label class="form-label">Pause Duration (seconds)</label>
+                            <input type="number" id="chat-timer-duration" class="form-control" required placeholder="60">
+                        </div>
+                        <button type="submit" class="btn-primary">Apply Timer (Pause Chat)</button>
+                        <button type="button" class="btn-primary" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-main);" onclick="handleChatTimerClear()">Unpause Now</button>
+                    </form>
+                 </div>
+                 
+                 <div class="card" style="margin-bottom:0;">
+                    <h3 style="margin-top: 0;">Manual Ban User</h3>
+                    <form onsubmit="handleChatBanSubmit(event)">
+                        <div class="form-group">
+                            <label class="form-label">Username</label>
+                            <input type="text" id="chat-ban-username" class="form-control" required placeholder="Guest123">
+                        </div>
+                        <button type="submit" class="btn-danger">Ban and Kick User</button>
+                    </form>
+                 </div>
+            </div>
+
+            <div class="card" style="margin-top: 1.5rem;">
+                <div class="list-header">
+                    <h3 style="margin: 0;">Active WebSockets (Live Users)</h3>
+                    <button class="btn-primary" style="padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="loadActiveChatUsers()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
+                <div id="chat-users-list">
+                    <div style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading active users...</div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -498,6 +540,7 @@
             if(tabId === 'seo') loadSeoForPage();
             if(tabId === 'social') loadSocialSettings();
             if(tabId === 'reviews') loadReviews();
+            if(tabId === 'chatmod') loadActiveChatUsers();
         }
 
         function previewImage(inputId, previewId) {
@@ -798,6 +841,105 @@
 
         async function handleReviewSubmit(e) {
             e.preventDefault();
+            const payload = {
+                name: document.getElementById('review-name').value,
+                rating: parseInt(document.getElementById('review-rating').value),
+                text: document.getElementById('review-text').value
+            };
+            try {
+                await apiCall('/api/reviews', 'POST', payload);
+                document.getElementById('review-name').value = '';
+                document.getElementById('review-text').value = '';
+                document.getElementById('review-rating').value = 5;
+                loadReviews();
+                alert("Review posted successfully!");
+            } catch(e) {
+                alert("Failed to post review");
+            }
+        }
+        
+        async function deleteReview(id) {
+            if(confirm("Delete this review?")) {
+                try {
+                    await apiCall(`/api/reviews/${id}`, 'DELETE');
+                    loadReviews();
+                } catch(e) {
+                    alert("Failed to delete review");
+                }
+            }
+        }
+
+        // --- Chat Moderation ---
+        async function loadActiveChatUsers() {
+            const container = document.getElementById('chat-users-list');
+            container.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--text-muted);"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
+            try {
+                const res = await apiCall('/api/admin/chat/users');
+                if (!res.users || res.users.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; padding:2rem; color:var(--text-muted);">No active users found.</div>';
+                    return;
+                }
+                container.innerHTML = res.users.map(u => `
+                    <div class="review-item" style="align-items: center;">
+                        <strong style="color:var(--highlight);">${escapeHTML(u)}</strong>
+                        <button class="btn-danger" style="padding:0.4rem 0.8rem; font-size:0.85rem;" onclick="banUserFromList('${escapeHTML(u)}')">Ban & Kick</button>
+                    </div>
+                `).join('');
+            } catch(e) {
+                container.innerHTML = '<div style="color:#ef4444; padding:1rem;">Failed to load active users.</div>';
+            }
+        }
+
+        async function banUserFromList(username) {
+            if(!confirm(`Are you sure you want to ban ${username}?`)) return;
+            try {
+                await apiCall('/api/admin/chat/ban', 'POST', { username: username });
+                alert(`${username} banned successfully.`);
+                loadActiveChatUsers();
+            } catch(e) {
+                alert("Failed to ban user: " + e.message);
+            }
+        }
+
+        async function handleChatBanSubmit(e) {
+            e.preventDefault();
+            const username = document.getElementById('chat-ban-username').value;
+            if(!username) return;
+            if(!confirm(`Are you sure you want to ban ${username}?`)) return;
+            try {
+                await apiCall('/api/admin/chat/ban', 'POST', { username: username });
+                alert(`${username} banned successfully.`);
+                document.getElementById('chat-ban-username').value = '';
+                loadActiveChatUsers();
+            } catch(e) {
+                alert("Failed to ban user.");
+            }
+        }
+
+        async function handleChatTimerSubmit(e) {
+            e.preventDefault();
+            const duration = parseInt(document.getElementById('chat-timer-duration').value);
+            if(isNaN(duration) || duration <= 0) return;
+            try {
+                await apiCall('/api/admin/chat/timer', 'POST', { duration_seconds: duration });
+                alert(`Chat paused for ${duration} seconds.`);
+                document.getElementById('chat-timer-duration').value = '';
+            } catch(e) {
+                alert("Failed to set timer.");
+            }
+        }
+        
+        async function handleChatTimerClear() {
+            try {
+                await apiCall('/api/admin/chat/timer', 'POST', { duration_seconds: 0 });
+                alert("Chat unpaused.");
+            } catch(e) {
+                alert("Failed to unpause.");
+            }
+        }
+    </script>
+</body>
+</html>
             const payload = {
                 name: document.getElementById('review-name').value,
                 rating: parseInt(document.getElementById('review-rating').value),

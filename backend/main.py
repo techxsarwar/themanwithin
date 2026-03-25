@@ -1,7 +1,7 @@
 import os
 import secrets
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import FastAPI, Request, Depends, HTTPException, status, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -14,8 +14,8 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from models import (
     get_db, SessionLocal, Announcement, SEOSetting, Analytics, SiteSetting, Review, Message, ChatMessage,
-    AnnouncementCreate, AnnouncementUpdate, SEOSettingUpdate,
-    SiteSettingUpdate, ReviewCreate
+    BannedUser, AnnouncementCreate, AnnouncementUpdate, SEOSettingUpdate,
+    SiteSettingUpdate, ReviewCreate, BannedUserCreate, ChatTimerSet
 )
 
 app = FastAPI(title="The Man Within - Backend", version="1.0.0")
@@ -71,22 +71,27 @@ class ContactMessage(BaseModel):
 # --- WebSocket Chat Manager ---
 class ConnectionManager:
     def __init__(self):
-        self.active_connections: list[WebSocket] = []
+        self.active_connections: dict[WebSocket, str] = {}
+        self.chat_frozen_until: datetime = None
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
-        self.active_connections.append(websocket)
+        self.active_connections[websocket] = None
 
     def disconnect(self, websocket: WebSocket):
         if websocket in self.active_connections:
-            self.active_connections.remove(websocket)
+            del self.active_connections[websocket]
 
     async def broadcast(self, message: dict):
-        for connection in self.active_connections:
+        for connection in list(self.active_connections.keys()):
             try:
                 await connection.send_json(message)
             except Exception:
                 pass
+
+    def set_user(self, websocket: WebSocket, username: str):
+        if websocket in self.active_connections:
+            self.active_connections[websocket] = username
 
 manager = ConnectionManager()
 
@@ -379,6 +384,48 @@ async def delete_chat_message(id: int, db=Depends(get_db), username: str = Depen
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/admin/chat/users")
+async def get_active_chat_users(username: str = Depends(get_current_username)):
+    users = [u for u in manager.active_connections.values() if u is not None]
+    return {"users": list(set(users))}
+
+@app.post("/api/admin/chat/ban")
+async def ban_chat_user(user_data: BannedUserCreate, db=Depends(get_db), username: str = Depends(get_current_username)):
+    try:
+        existing = db.query(BannedUser).filter(BannedUser.username == user_data.username).first()
+        if not existing:
+            bu = BannedUser(username=user_data.username)
+            db.add(bu)
+            db.commit()
+            
+        websockets_to_close = []
+        for ws, uname in manager.active_connections.items():
+            if uname == user_data.username:
+                websockets_to_close.append(ws)
+                
+        for ws in websockets_to_close:
+            try:
+                await ws.send_json({"type": "banned", "text": "You have been banned by the author."})
+                await ws.close()
+            except Exception:
+                pass
+            manager.disconnect(ws)
+            
+        return {"status": "success", "message": f"{user_data.username} banned."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/admin/chat/timer")
+async def set_chat_timer(timer_data: ChatTimerSet, username: str = Depends(get_current_username)):
+    if timer_data.duration_seconds > 0:
+        manager.chat_frozen_until = datetime.now() + timedelta(seconds=timer_data.duration_seconds)
+        await manager.broadcast({"type": "freeze", "duration": timer_data.duration_seconds})
+    else:
+        manager.chat_frozen_until = None
+        await manager.broadcast({"type": "freeze", "duration": 0})
+    return {"status": "success"}
+
 @app.websocket("/ws/chat")
 async def websocket_chat_endpoint(websocket: WebSocket):
     print(f"New chat connection attempt: {websocket.client}")
@@ -394,10 +441,22 @@ async def websocket_chat_endpoint(websocket: WebSocket):
                     await websocket.send_json({"type": "pong"})
                     continue
 
+                sender = msg_data.get("sender", "Guest")
+                
+                # Check Ban status
+                db = SessionLocal()
+                is_banned = db.query(BannedUser).filter(BannedUser.username == sender).first()
+                db.close()
+                if is_banned:
+                    await websocket.send_json({"type": "banned", "text": "You are banned from the chat."})
+                    manager.disconnect(websocket)
+                    await websocket.close()
+                    break
+
                 # If a join event, system announces
                 if msg_data.get("type") == "join":
-                    sender_name = msg_data.get("sender", "a new reader")
-                    welcome_text = f"The Man Within welcomes {sender_name} to the chat!"
+                    manager.set_user(websocket, sender)
+                    welcome_text = f"The Man Within welcomes {sender} to the chat!"
                     broadcast_data = {
                         "sender": "The Man Within",
                         "is_admin": True,
@@ -409,7 +468,10 @@ async def websocket_chat_endpoint(websocket: WebSocket):
                     continue
 
                 # Normal Chat Message
-                sender = msg_data.get("sender", "Guest")
+                if manager.chat_frozen_until and datetime.now() < manager.chat_frozen_until:
+                    # Chat is frozen
+                    continue
+
                 text = msg_data.get("text", "")
                 is_admin = msg_data.get("is_admin", False)
                 

@@ -71,6 +71,12 @@ class ChatMessage(Base):
     text = Column(Text)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
+class BannedUser(Base):
+    __tablename__ = "banned_users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    banned_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
 Base.metadata.create_all(bind=engine)
 
 def get_db():
@@ -105,3 +111,9 @@ class ReviewCreate(BaseModel):
     name: str
     rating: int
     text: str
+
+class BannedUserCreate(BaseModel):
+    username: str
+
+class ChatTimerSet(BaseModel):
+    duration_seconds: int
