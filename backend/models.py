@@ -129,3 +129,6 @@ class AdminCredentialsUpdate(BaseModel):
     old_password: str
     new_username: str
     new_password: str
+
+class MaintenanceSet(BaseModel):
+    duration_minutes: int

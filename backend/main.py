@@ -1,7 +1,7 @@
 import os
 import secrets
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, Request, Depends, HTTPException, status, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -16,11 +16,12 @@ from models import (
     get_db, SessionLocal, Announcement, SEOSetting, Analytics, SiteSetting, Review, Message, ChatMessage,
     BannedUser, AnnouncementCreate, AnnouncementUpdate, SEOSettingUpdate,
     SiteSettingUpdate, ReviewCreate, BannedUserCreate, ChatTimerSet,
-    AdminCredentials, AdminCredentialsUpdate
+    AdminCredentials, AdminCredentialsUpdate, MaintenanceSet
 )
 import hashlib
 
 app = FastAPI(title="The Man Within - Backend", version="1.0.0")
+app.state.maintenance_until = None
 
 app.add_middleware(
     CORSMiddleware,
@@ -186,6 +187,21 @@ async def handle_contact_form(message: ContactMessage, db=Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 # Admin endpoints
+@app.get("/api/status")
+async def get_system_status():
+    until = getattr(app.state, 'maintenance_until', None)
+    if until and datetime.now(timezone.utc) < until:
+        return {"maintenance_until": until.isoformat()}
+    return {"maintenance_until": None}
+
+@app.post("/api/admin/maintenance")
+async def set_maintenance(timer_data: MaintenanceSet, username: str = Depends(get_current_username)):
+    if timer_data.duration_minutes > 0:
+        app.state.maintenance_until = datetime.now(timezone.utc) + timedelta(minutes=timer_data.duration_minutes)
+    else:
+        app.state.maintenance_until = None
+    return {"status": "success"}
+
 @app.get("/login", response_class=HTMLResponse)
 async def login_page():
     login_path = os.path.join(FRONTEND_DIR, "login.html")

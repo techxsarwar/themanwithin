@@ -281,6 +281,7 @@
             <div class="nav-item" onclick="switchTab('reviews')"><i class="fas fa-star"></i> Reviews</div>
             <div class="nav-item" onclick="switchTab('chatmod')"><i class="fas fa-shield-alt"></i> Chat Mod</div>
             <div class="nav-item" onclick="switchTab('security')"><i class="fas fa-lock"></i> Security</div>
+            <div class="nav-item" onclick="switchTab('maintenance')"><i class="fas fa-tools"></i> Maintenance</div>
         </div>
         <div class="sidebar-footer">
             <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Secure Logout</button>
@@ -567,6 +568,36 @@
                 </form>
             </div>
         </div>
+
+        <!-- Maintenance Tab -->
+        <div id="tab-maintenance" class="tab-content">
+            <h1 class="page-title">Site Maintenance</h1>
+            <p class="page-subtitle">Lock down the website for updates. The site will automatically reopen with a 20s cinematic welcome.</p>
+            
+            <div class="card" style="max-width: 500px;">
+                <h3 style="margin-top:0;">Enable Maintenance Mode</h3>
+                <form onsubmit="handleMaintenanceSubmit(event)">
+                    <div class="form-group">
+                        <label class="form-label">Duration (Minutes)</label>
+                        <input type="number" id="maint-duration" class="form-control" placeholder="e.g. 5" min="1" required>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="submit" class="btn-primary" style="background:#ef4444; border-color:#ef4444;">Start Maintenance Lockdown</button>
+                        <button type="button" class="btn-primary" style="background:transparent; border:1px solid var(--border-color); color:var(--text-main);" onclick="handleMaintenanceStop()">Force Stop Now</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="card" style="margin-top:1.5rem; border-color: #3b82f6;">
+                <div style="display:flex; align-items:center; gap: 1rem;">
+                    <i class="fas fa-info-circle" style="font-size:2rem; color:#3b82f6;"></i>
+                    <div>
+                        <h4 style="margin:0 0 0.5rem 0;">How it works</h4>
+                        <p style="margin:0; font-size: 0.9rem; color: var(--text-muted);">When maintenance mode is active, any visitor to the main website will see a full-page countdown overlay blocking all access. When the timer hits 00:00, it triggers the Grand Welcoming sequence.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -689,6 +720,34 @@
             } catch(error) {
                 alert("Error: " + error.message);
                 generateCaptchas();
+            }
+        }
+
+        
+        async function handleMaintenanceSubmit(e) {
+            e.preventDefault();
+            const duration = parseInt(document.getElementById('maint-duration').value);
+            if(!duration || duration <= 0) return;
+            
+            if(!confirm(`Lock down the site for ${duration} minutes?`)) return;
+            
+            try {
+                await apiCall('/api/admin/maintenance', 'POST', { duration_minutes: duration });
+                alert(`Maintenance mode activated for ${duration} minutes.`);
+                document.getElementById('maint-duration').value = '';
+            } catch(error) {
+                alert("Failed to set maintenance: " + error.message);
+            }
+        }
+
+        async function handleMaintenanceStop() {
+            if(!confirm('Immediately force stop maintenance and reopen site?')) return;
+            
+            try {
+                await apiCall('/api/admin/maintenance', 'POST', { duration_minutes: 0 });
+                alert("Maintenance mode disabled! Site is live.");
+            } catch(error) {
+                alert("Failed to stop maintenance: " + error.message);
             }
         }
 

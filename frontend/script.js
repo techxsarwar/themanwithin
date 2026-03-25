@@ -7,9 +7,104 @@ let chatWs = null;
 let currentChatUser = localStorage.getItem('chatUser');
 let currentChatIsAdmin = localStorage.getItem('chatIsAdmin') === 'true';
 
+async function checkMaintenanceStatus() {
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/status`);
+        const data = await res.json();
+        if (data.maintenance_until) {
+            const until = new Date(data.maintenance_until);
+            if (until > new Date()) {
+                startMaintenanceOverlay(until);
+            }
+        }
+    } catch(e) {
+        console.error("Maintenance check failed:", e);
+    }
+}
+
+function startMaintenanceOverlay(untilTime) {
+    if (document.getElementById('maintenance-overlay')) return;
+    
+    const style = document.createElement('style');
+    style.innerHTML = `
+        #maintenance-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 999999; display: flex; align-items: center; justify-content: center;
+            background: rgba(10, 10, 15, 0.98); backdrop-filter: blur(20px);
+            color: #fff; text-align: center; transition: opacity 2s ease-out;
+        }
+        .maint-content { animation: pulse-glow 2s infinite alternate; }
+        .maint-icon { font-size: 4rem; color: #ef4444; margin-bottom: 1rem; }
+        .maint-title { font-size: 3rem; margin-bottom: 0.5rem; letter-spacing: 2px; }
+        .maint-text { font-size: 1.2rem; color: #aaa; margin-bottom: 2rem; }
+        .maint-timer { font-size: 4rem; font-family: monospace; font-weight: bold; color: #ef4444; text-shadow: 0 0 20px rgba(239,68,68,0.5); }
+        @keyframes pulse-glow { from { transform: scale(1); opacity: 0.9; } to { transform: scale(1.02); opacity: 1; } }
+        .maintenance-welcome { background: radial-gradient(circle at center, #0f172a 0%, #020617 100%) !important; }
+        .welcome-content { animation: welcome-cinematic 20s ease-out forwards; }
+        .welcome-title { font-size: 4rem; margin-bottom: 1rem; color: #fff; text-shadow: 0 0 30px rgba(255,255,255,0.4); font-family: 'Playfair Display', serif; }
+        .welcome-text { font-size: 1.5rem; color: #94a3b8; letter-spacing: 5px; text-transform: uppercase; }
+        @keyframes welcome-cinematic {
+            0% { transform: scale(0.8); opacity: 0; filter: blur(10px); }
+            10% { transform: scale(1); opacity: 1; filter: blur(0); }
+            90% { transform: scale(1.1); opacity: 1; filter: blur(0); }
+            100% { transform: scale(1.15); opacity: 1; filter: blur(0); }
+        }
+        .fade-out { opacity: 0 !important; }
+    `;
+    document.head.appendChild(style);
+    
+    const overlay = document.createElement('div');
+    overlay.id = 'maintenance-overlay';
+    overlay.className = 'maintenance-locked';
+    overlay.innerHTML = `
+        <div class="maint-content">
+            <i class="fas fa-tools maint-icon"></i>
+            <h1 class="maint-title">Site Under Maintenance</h1>
+            <p class="maint-text">We are upgrading the experience. The Man Within will awaken shortly.</p>
+            <div class="maint-timer" id="maint-timer">00:00</div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+    
+    const timerInterval = setInterval(() => {
+        const diff = untilTime - new Date();
+        if (diff <= 0) {
+            clearInterval(timerInterval);
+            triggerGrandWelcoming(overlay);
+        } else {
+            const m = Math.floor((diff / 1000) / 60).toString().padStart(2, '0');
+            const s = Math.floor((diff / 1000) % 60).toString().padStart(2, '0');
+            document.getElementById('maint-timer').innerText = `${m}:${s}`;
+        }
+    }, 1000);
+}
+
+function triggerGrandWelcoming(overlay) {
+    overlay.className = 'maintenance-welcome';
+    overlay.innerHTML = `
+        <div class="welcome-content">
+            <h1 class="welcome-title">The Man Within Has Returned.</h1>
+            <p class="welcome-text">Let the journey begin.</p>
+        </div>
+    `;
+    setTimeout(() => {
+        overlay.classList.add('fade-out');
+        setTimeout(() => {
+            overlay.remove();
+            document.body.style.overflow = 'auto';
+        }, 2000);
+    }, 20000);
+}
+
 // Wait for DOM to load
 document.addEventListener('DOMContentLoaded', () => {
     
+    // Check Maintenance Status (excluding admin pages)
+    if (!window.location.pathname.includes('/admin.html') && !window.location.pathname.includes('/login.html')) {
+        checkMaintenanceStatus();
+    }
+
     // 1. Navigation Scrolled State
     const navbar = document.getElementById('navbar');
     
