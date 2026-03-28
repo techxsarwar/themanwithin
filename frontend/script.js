@@ -627,3 +627,10 @@ function handleChatKeyPress(e) {
         sendChatMessage();
     }
 }
+
+// AI Agent script injection
+const aiAgentScript = document.createElement('script');
+aiAgentScript.src = 'https://cdn.jotfor.ms/agent/embedjs/019d33de6ec3730687cb4455a8058ec0831f/embed.js';
+aiAgentScript.type = 'text/javascript';
+aiAgentScript.async = true;
+document.head.appendChild(aiAgentScript);
