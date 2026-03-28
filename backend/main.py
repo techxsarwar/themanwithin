@@ -2,6 +2,7 @@ import os
 import secrets
 import json
 from datetime import datetime, timedelta, timezone
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Depends, HTTPException, status, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -16,11 +17,18 @@ from models import (
     get_db, SessionLocal, Announcement, SEOSetting, Analytics, SiteSetting, Review, Message, ChatMessage,
     BannedUser, AnnouncementCreate, AnnouncementUpdate, SEOSettingUpdate,
     SiteSettingUpdate, ReviewCreate, BannedUserCreate, ChatTimerSet,
-    AdminCredentials, AdminCredentialsUpdate, MaintenanceSet
+    AdminCredentials, AdminCredentialsUpdate, MaintenanceSet,
+    engine, Base
 )
 import hashlib
 
-app = FastAPI(title="The Man Within - Backend", version="1.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # This safely creates tables when the server boots up without freezing it
+    Base.metadata.create_all(bind=engine)
+    yield
+
+app = FastAPI(title="The Man Within - Backend", version="1.0.0", lifespan=lifespan)
 app.state.maintenance_until = None
 
 app.add_middleware(
