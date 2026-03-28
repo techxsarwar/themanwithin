@@ -25,7 +25,7 @@ import hashlib
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # This safely creates tables when the server boots up without freezing it
-    Base.metadata.create_all(bind=engine)
+    # Base.metadata.create_all(bind=engine)
     yield
 
 app = FastAPI(title="The Man Within - Backend", version="1.0.0", lifespan=lifespan)
