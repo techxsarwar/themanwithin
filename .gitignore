@@ -1,0 +1,21 @@
+# Security
+**/.env
+backend/contact.db
+
+# Python
+**/__pycache__/
+*.py[cod]
+
+# Node / JS
+node_modules/
+.DS_Store
+dist/
+build/
+
+# Local database
+*.db
+*.sqlite3
+
+# OS files
+Thumbs.db
+Desktop.ini
